@@ -41,6 +41,10 @@ export default function LoginModal({ isOpen, onClose, onLogin, currentSession }:
     const emailTrimmed = customEmail.trim().toLowerCase();
     const existing = availableUsers.find(u => u.email.toLowerCase() === emailTrimmed);
     if (existing) {
+      if (existing.password && customPass && existing.password !== customPass) {
+        alert('Contraseña incorrecta. Por favor verifica tus credenciales (clave por defecto: 123).');
+        return;
+      }
       onLogin(existing);
       onClose();
       return;

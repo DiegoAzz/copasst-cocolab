@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Camera, FileText, Building2, Smartphone, BookOpen, Users, ChevronDown } from 'lucide-react';
+import { Shield, Camera, FileText, Building2, Smartphone, BookOpen, Users, ChevronDown, LogOut } from 'lucide-react';
 import { CompanyProfile, UserSession } from '@/types';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
   onOpenActa: () => void;
   onOpenCompany: () => void;
   onOpenManual: () => void;
+  onLogout: () => void;
   activeSection: string;
   setActiveSection: (s: string) => void;
 }
@@ -26,6 +27,7 @@ export default function Navbar({
   onOpenActa,
   onOpenCompany,
   onOpenManual,
+  onLogout,
   activeSection,
   setActiveSection,
 }: Props) {
@@ -191,14 +193,14 @@ export default function Navbar({
             <div
               onClick={onOpenLogin}
               className="flex items-center gap-2 pl-2 pr-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl cursor-pointer transition-all shadow-sm group"
-              title="Haz clic para cambiar de rol o iniciar sesión"
+              title="Haz clic para cambiar de rol o usuario"
             >
               <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                {session?.nombre.charAt(0) || 'W'}
+                {session?.nombre.charAt(0) || 'U'}
               </div>
               <div className="hidden sm:flex flex-col text-left">
                 <span className="text-[11px] font-bold text-slate-900 leading-tight truncate max-w-[120px]">
-                  {session?.nombre.split(' ')[0] || 'Wendy'}
+                  {session?.nombre.split(' ')[0] || 'Usuario'}
                 </span>
                 <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border ${roleInfo.color} inline-block leading-tight mt-0.5`}>
                   {roleInfo.label}
@@ -206,6 +208,16 @@ export default function Navbar({
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
             </div>
+
+            {/* Botón Salir / Cerrar Sesión */}
+            <button
+              onClick={onLogout}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 text-rose-600 hover:text-white hover:bg-rose-600 rounded-xl transition-all border border-rose-200 shadow-sm flex items-center gap-1.5 text-xs font-semibold"
+              title="Cerrar sesión de forma segura"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden md:inline">Salir</span>
+            </button>
           </div>
         </div>
       </div>

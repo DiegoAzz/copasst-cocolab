@@ -241,6 +241,12 @@ export default function HomePage() {
   const handleLogin = (u: UserSession) => {
     storage.setSession(u);
     setSession(u);
+    setIsLoginModalOpen(false);
+  };
+
+  const handleLogout = () => {
+    storage.setSession(null);
+    setSession(null);
   };
 
   // RBAC checks
@@ -252,6 +258,54 @@ export default function HomePage() {
   const canManageUsers = isWendyRRHH || isAdmin || session?.rol === 'AMBOS_COMITES';
 
   const canAccessCocolabPrivates = isCocolabMember || isAdmin;
+
+  // PROTECCIÓN ESTRICTA: Ningún usuario puede ver ni interactuar con la plataforma si no ha iniciado sesión
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex flex-col justify-between">
+        {/* Header de Bloqueo de Acceso */}
+        <header className="bg-white border-b border-slate-200 py-3.5 px-4 sm:px-6 shadow-sm">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20">
+                <Shield className="w-5 h-5 text-white stroke-[2.5]" />
+              </div>
+              <div>
+                <span className="text-base font-extrabold tracking-tight text-slate-900 font-mono">
+                  CoCoPASST
+                </span>
+                <p className="text-[11px] text-slate-500">
+                  {company.razonSocial} • Acceso Protegido SG-SST
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                Decreto 1072/2015
+              </span>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                Res. 0312/2019
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Login Modal Obligatorio */}
+        <main className="flex-1 flex items-center justify-center p-4">
+          <LoginModal
+            isOpen={true}
+            onClose={() => {}}
+            onLogin={handleLogin}
+            currentSession={null}
+          />
+        </main>
+
+        <footer className="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
+          Plataforma Institucional SG-SST & COCOLAB • Estricta confidencialidad laboral garantizada
+        </footer>
+      </div>
+    );
+  }
 
   const filteredEvidences = evidences.filter(e => {
     if (evidenceFilter === 'todos') return true;
@@ -273,6 +327,7 @@ export default function HomePage() {
         }}
         onOpenCompany={() => setIsCompanyModalOpen(true)}
         onOpenManual={() => setIsManualModalOpen(true)}
+        onLogout={handleLogout}
         activeSection={activeSection}
         setActiveSection={setActiveSection}
       />

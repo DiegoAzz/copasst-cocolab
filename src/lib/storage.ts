@@ -717,9 +717,9 @@ export const storage = {
   },
 
   getSession: (): UserSession | null => {
-    if (typeof window === 'undefined') return DEMO_USERS[0];
+    if (typeof window === 'undefined') return null;
     const val = localStorage.getItem('cocopasst_session');
-    return val ? JSON.parse(val) : DEMO_USERS[0];
+    return val ? JSON.parse(val) : null;
   },
   setSession: (user: UserSession | null) => {
     if (typeof window !== 'undefined') {
