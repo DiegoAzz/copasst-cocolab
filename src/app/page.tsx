@@ -383,7 +383,7 @@ export default function HomePage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col pb-20 md:pb-8">
+    <div className="min-h-screen w-full bg-slate-50 text-slate-900 flex flex-col pb-20 md:pb-8 overflow-x-clip">
       {/* Navbar */}
       <Navbar
         company={company}
