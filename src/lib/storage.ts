@@ -1166,25 +1166,31 @@ export const storage = {
 
   getEmpleados: (): Empleado[] => {
     if (typeof window === 'undefined') return INITIAL_EMPLEADOS;
-    const val = localStorage.getItem('cocopasst_empleados');
+    const key = 'cocopasst_empleados_v3';
+    const val = localStorage.getItem(key);
     if (!val) {
-      localStorage.setItem('cocopasst_empleados', JSON.stringify(INITIAL_EMPLEADOS));
+      localStorage.setItem(key, JSON.stringify(INITIAL_EMPLEADOS));
+      try {
+        localStorage.removeItem('cocopasst_empleados');
+        localStorage.removeItem('cocopasst_empleados_v2');
+      } catch {}
       return INITIAL_EMPLEADOS;
     }
     try {
       const parsed = JSON.parse(val);
-      if (parsed.length !== INITIAL_EMPLEADOS.length || !parsed.some((e: Empleado) => e.nombre.toUpperCase().includes('JAIDER'))) {
-        localStorage.setItem('cocopasst_empleados', JSON.stringify(INITIAL_EMPLEADOS));
+      if (!Array.isArray(parsed) || parsed.length !== 26 || !parsed.some((e: Empleado) => e.nombre === 'DYLAN SANTIAGO RICO GONZALEZ')) {
+        localStorage.setItem(key, JSON.stringify(INITIAL_EMPLEADOS));
         return INITIAL_EMPLEADOS;
       }
       return parsed;
     } catch {
+      localStorage.setItem(key, JSON.stringify(INITIAL_EMPLEADOS));
       return INITIAL_EMPLEADOS;
     }
   },
   saveEmpleados: (data: Empleado[]) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('cocopasst_empleados', JSON.stringify(data));
+      localStorage.setItem('cocopasst_empleados_v3', JSON.stringify(data));
       window.dispatchEvent(new Event('cocopasst_empleados_changed'));
     }
   },
