@@ -44,10 +44,13 @@ export default function UserManagementModal({ isOpen, onClose, currentUser, onSw
   const [isEditingEmpleado, setIsEditingEmpleado] = useState(false);
   const [selectedEmpleado, setSelectedEmpleado] = useState<Empleado | null>(null);
   const [empNombre, setEmpNombre] = useState('');
+  const [empTipoDocumento, setEmpTipoDocumento] = useState('CC');
   const [empCedula, setEmpCedula] = useState('');
+  const [empFechaExpedicion, setEmpFechaExpedicion] = useState('');
+  const [empEps, setEmpEps] = useState('SANITAS');
   const [empCargo, setEmpCargo] = useState('');
   const [empArea, setEmpArea] = useState('Operaciones');
-  const [empSede, setEmpSede] = useState('Sede Principal - Cazucá');
+  const [empSede, setEmpSede] = useState('Sede Principal SYSNET');
   const [empNivelRiesgo, setEmpNivelRiesgo] = useState<NivelRiesgo>(1);
   const [empEmail, setEmpEmail] = useState('');
   const [empTelefono, setEmpTelefono] = useState('');
@@ -82,10 +85,13 @@ export default function UserManagementModal({ isOpen, onClose, currentUser, onSw
     setIsEditingEmpleado(false);
     setSelectedEmpleado(null);
     setEmpNombre('');
+    setEmpTipoDocumento('CC');
     setEmpCedula('');
+    setEmpFechaExpedicion('');
+    setEmpEps('SANITAS');
     setEmpCargo('');
     setEmpArea('Operaciones');
-    setEmpSede('Sede Principal - Cazucá');
+    setEmpSede('Sede Principal SYSNET');
     setEmpNivelRiesgo(1);
     setEmpEmail('');
     setEmpTelefono('');
@@ -98,7 +104,10 @@ export default function UserManagementModal({ isOpen, onClose, currentUser, onSw
   const handleOpenEditEmpleado = (emp: Empleado) => {
     setSelectedEmpleado(emp);
     setEmpNombre(emp.nombre);
+    setEmpTipoDocumento(emp.tipoDocumento || 'CC');
     setEmpCedula(emp.cedula);
+    setEmpFechaExpedicion(emp.fechaExpedicion || '');
+    setEmpEps(emp.eps || 'SANITAS');
     setEmpCargo(emp.cargo);
     setEmpArea(emp.area);
     setEmpSede(emp.sede);
@@ -120,8 +129,11 @@ export default function UserManagementModal({ isOpen, onClose, currentUser, onSw
 
     const nuevoEmpleado: Empleado = {
       id: selectedEmpleado ? selectedEmpleado.id : 'emp-' + Date.now(),
-      nombre: empNombre.trim(),
+      nombre: empNombre.trim().toUpperCase(),
+      tipoDocumento: empTipoDocumento,
       cedula: empCedula.trim(),
+      fechaExpedicion: empFechaExpedicion.trim() || undefined,
+      eps: empEps.trim() || undefined,
       cargo: empCargo.trim() || 'Colaborador',
       area: empArea,
       sede: empSede,
@@ -418,19 +430,56 @@ export default function UserManagementModal({ isOpen, onClose, currentUser, onSw
                         value={empNombre}
                         onChange={(e) => setEmpNombre(e.target.value)}
                         placeholder="ej: Andrés Mauricio Pérez Castro"
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-purple-600"
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-purple-600 uppercase font-semibold"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Cédula de Ciudadanía *</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Tipo de Documento *</label>
+                      <select
+                        value={empTipoDocumento}
+                        onChange={(e) => setEmpTipoDocumento(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600"
+                      >
+                        <option value="CC">C.C. - Cédula de Ciudadanía</option>
+                        <option value="CE">C.E. - Cédula de Extranjería</option>
+                        <option value="TI">T.I. - Tarjeta de Identidad</option>
+                        <option value="PAS">Pasaporte</option>
+                        <option value="PPT">PPT - Permiso Protección Temporal</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Número de Documento *</label>
                       <input
                         type="text"
                         required
                         value={empCedula}
                         onChange={(e) => setEmpCedula(e.target.value)}
-                        placeholder="ej: 1.018.442.120"
+                        placeholder="ej: 1047447746"
                         className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 focus:outline-none focus:border-purple-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Fecha de Expedición</label>
+                      <input
+                        type="text"
+                        value={empFechaExpedicion}
+                        onChange={(e) => setEmpFechaExpedicion(e.target.value)}
+                        placeholder="ej: 15/05/2023"
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-purple-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Entidad Promotora de Salud (EPS)</label>
+                      <input
+                        type="text"
+                        value={empEps}
+                        onChange={(e) => setEmpEps(e.target.value)}
+                        placeholder="ej: SANITAS, SALUD TOTAL, EPS MUTUAL SER..."
+                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-purple-600 font-medium"
                       />
                     </div>
 
@@ -500,7 +549,7 @@ export default function UserManagementModal({ isOpen, onClose, currentUser, onSw
                         type="email"
                         value={empEmail}
                         onChange={(e) => setEmpEmail(e.target.value)}
-                        placeholder="correo@empresa.co"
+                        placeholder="correo@sysnet.com.co o gmail.com"
                         className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-purple-600"
                       />
                     </div>
@@ -677,10 +726,26 @@ export default function UserManagementModal({ isOpen, onClose, currentUser, onSw
                           </span>
                         </div>
 
-                        <div className="text-[10px] text-slate-500 space-y-0.5 border-t border-slate-100 pt-2">
-                          <p><strong>C.C:</strong> {emp.cedula} • <strong>Área:</strong> {emp.area}</p>
-                          <p className="truncate"><strong>Sede:</strong> {emp.sede}</p>
-                          {emp.email && <p className="truncate font-mono text-slate-400">{emp.email}</p>}
+                        <div className="text-[10px] text-slate-500 space-y-1 border-t border-slate-100 pt-2">
+                          <p>
+                            <span className="font-bold text-slate-700">{emp.tipoDocumento || 'CC'}</span> <span className="font-mono font-bold text-slate-900">{emp.cedula}</span>
+                            {emp.fechaExpedicion && <span className="text-slate-400 font-mono text-[9px] ml-1">(Exp: {emp.fechaExpedicion})</span>}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                            {emp.eps && (
+                              <span className="font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded text-[9px]">
+                                EPS: {emp.eps}
+                              </span>
+                            )}
+                            <span className="text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded text-[9px]">
+                              {emp.area}
+                            </span>
+                          </div>
+                          {emp.email && (
+                            <p className="truncate font-mono text-blue-600 font-medium text-[10px] pt-0.5">
+                              ✉ {emp.email}
+                            </p>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[10px]">
@@ -753,7 +818,7 @@ export default function UserManagementModal({ isOpen, onClose, currentUser, onSw
                         required
                         value={uEmail}
                         onChange={(e) => setUEmail(e.target.value)}
-                        placeholder="usuario@empresa.co"
+                        placeholder="usuario@sysnet.com.co o gmail.com"
                         className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-purple-600"
                       />
                     </div>

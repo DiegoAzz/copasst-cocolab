@@ -25,7 +25,10 @@ export interface UserAccount {
 export interface Empleado {
   id: string;
   nombre: string;
+  tipoDocumento?: string;
   cedula: string;
+  fechaExpedicion?: string;
+  eps?: string;
   cargo: string;
   area: string;
   sede: string;

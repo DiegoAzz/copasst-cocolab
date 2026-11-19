@@ -42,7 +42,18 @@ export default function LoginModal({ isOpen, onClose, onLogin, currentSession, c
 
     const emailTrimmed = email.trim().toLowerCase();
     const allUsers = availableUsers.length > 0 ? availableUsers : DEMO_USERS;
-    const found = allUsers.find(u => u.email.toLowerCase() === emailTrimmed);
+    let found = allUsers.find(u => u.email.toLowerCase() === emailTrimmed);
+
+    // Aliases prácticos de inicio de sesión
+    if (!found) {
+      if (emailTrimmed === 'wendy@empresa.co' || emailTrimmed === 'wendy@sysnet.com.co') {
+        found = allUsers.find(u => u.email === 'rrhhsysnet@gmail.com');
+      } else if (emailTrimmed === 'diego@empresa.co' || emailTrimmed === 'diego@sysnet.com.co') {
+        found = allUsers.find(u => u.email === 'diego.zuniga.plazas@gmail.com');
+      } else if (emailTrimmed === 'jaider@empresa.co' || emailTrimmed === 'jaider@sysnet.com.co') {
+        found = allUsers.find(u => u.email === 'gerencia@sysnet.com.co');
+      }
+    }
 
     if (found) {
       if (found.password && password && found.password !== password) {
@@ -130,7 +141,7 @@ export default function LoginModal({ isOpen, onClose, onLogin, currentSession, c
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="ej: wendy@empresa.co"
+                placeholder="ej: rrhhsysnet@gmail.com o soporte10@sysnet.com.co"
                 className="w-full pl-3.5 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
               />
             </div>
