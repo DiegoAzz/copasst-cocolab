@@ -38,13 +38,16 @@ export type RiesgoGTC45 =
 
 export type ClasificacionPeligro = 'Condición Insegura' | 'Acto Inseguro' | 'Incidente' | 'Accidente de Trabajo' | 'Hallazgo de Inspección';
 
+export type NivelRiesgo = 1 | 2 | 3 | 4 | 5;
+
 export interface CompanyProfile {
   razonSocial: string;
   nit: string;
   actividadEconomica: string;
   codigoCIIU: string;
   arl: string;
-  nivelRiesgo: 1 | 2 | 3 | 4 | 5;
+  nivelRiesgo?: 1 | 2 | 3 | 4 | 5;
+  nivelesRiesgo: NivelRiesgo[];
   totalTrabajadores: number;
   sedePrincipal: string;
   direccion: string;

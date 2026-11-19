@@ -13,13 +13,45 @@ interface Props {
 }
 
 export default function CompanyModal({ isOpen, onClose, company, onSave }: Props) {
-  const [formData, setFormData] = useState<CompanyProfile>(company);
+  const [formData, setFormData] = useState<CompanyProfile>(() => {
+    const riesgos = company.nivelesRiesgo && company.nivelesRiesgo.length > 0
+      ? company.nivelesRiesgo
+      : [company.nivelRiesgo || 1];
+    return {
+      ...company,
+      nivelesRiesgo: riesgos,
+      nivelRiesgo: company.nivelRiesgo || (Math.max(...riesgos) as any),
+    };
+  });
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   if (!isOpen) return null;
 
   const copasstReq = calcularEstructuraCopasst(formData.totalTrabajadores);
   const cocolabReq = calcularEstructuraCocolab(formData.totalTrabajadores);
+
+  const selectedRiesgos = (formData.nivelesRiesgo && formData.nivelesRiesgo.length > 0)
+    ? formData.nivelesRiesgo
+    : [formData.nivelRiesgo || 1];
+
+  const toggleRiesgo = (nivel: 1 | 2 | 3 | 4 | 5) => {
+    let next: (1 | 2 | 3 | 4 | 5)[];
+    if (selectedRiesgos.includes(nivel)) {
+      if (selectedRiesgos.length === 1) {
+        alert('Debes mantener al menos un nivel de riesgo seleccionado.');
+        return;
+      }
+      next = selectedRiesgos.filter(n => n !== nivel);
+    } else {
+      next = [...selectedRiesgos, nivel].sort((a, b) => a - b);
+    }
+    const highestRisk = Math.max(...next) as 1 | 2 | 3 | 4 | 5;
+    setFormData({
+      ...formData,
+      nivelesRiesgo: next,
+      nivelRiesgo: highestRisk,
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,23 +195,6 @@ export default function CompanyModal({ isOpen, onClose, company, onSave }: Props
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Nivel de Riesgo de la Empresa (I a V) *
-              </label>
-              <select
-                value={formData.nivelRiesgo}
-                onChange={(e) => setFormData({ ...formData, nivelRiesgo: Number(e.target.value) as any })}
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-500"
-              >
-                <option value={1}>Clase I (Riesgo Mínimo - Comercial, Oficinas)</option>
-                <option value={2}>Clase II (Riesgo Bajo - Manufactura liviana)</option>
-                <option value={3}>Clase III (Riesgo Medio - Transporte, Almacenamiento)</option>
-                <option value={4}>Clase IV (Riesgo Alto - Industria pesada, Químicos)</option>
-                <option value={5}>Clase V (Riesgo Máximo - Minería, Construcción)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Total Trabajadores Vinculados *
               </label>
               <input
@@ -191,6 +206,62 @@ export default function CompanyModal({ isOpen, onClose, company, onSave }: Props
                 onChange={(e) => setFormData({ ...formData, totalTrabajadores: Number(e.target.value) || 1 })}
                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-mono text-blue-700 font-bold focus:outline-none focus:border-blue-500"
               />
+            </div>
+
+            {/* Selección Múltiple de Niveles de Riesgo ARL */}
+            <div className="sm:col-span-2 p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-800">
+                    Niveles de Riesgo ARL de la Empresa (Selección Múltiple) *
+                  </label>
+                  <p className="text-[11px] text-slate-500">
+                    Puedes marcar varios niveles si tu empresa tiene distintos centros de trabajo (ej: oficinas en Riesgo 1 y planta/campo en Riesgo 5).
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200 shadow-sm">
+                    Riesgos activos: {selectedRiesgos.length > 0 ? selectedRiesgos.map(r => ['I','II','III','IV','V'][r-1]).join(' y ') : 'Ninguno'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+                {[
+                  { nivel: 1, romano: 'Clase I', desc: 'Riesgo Mínimo', ejemplos: 'Oficinas, Comercial, Administrativo' },
+                  { nivel: 2, romano: 'Clase II', desc: 'Riesgo Bajo', ejemplos: 'Manufactura liviana, Almacenes' },
+                  { nivel: 3, romano: 'Clase III', desc: 'Riesgo Medio', ejemplos: 'Transporte, Alimentos, Procesos' },
+                  { nivel: 4, romano: 'Clase IV', desc: 'Riesgo Alto', ejemplos: 'Metalmecánica, Vidrio, Químicos' },
+                  { nivel: 5, romano: 'Clase V', desc: 'Riesgo Máximo', ejemplos: 'Construcción, Alturas, Minería, Eléctrico' },
+                ].map((item) => {
+                  const isChecked = selectedRiesgos.includes(item.nivel as any);
+                  return (
+                    <button
+                      key={item.nivel}
+                      type="button"
+                      onClick={() => toggleRiesgo(item.nivel as any)}
+                      className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between group ${
+                        isChecked
+                          ? 'border-blue-600 bg-blue-50/90 shadow-sm ring-2 ring-blue-500/20'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className={`text-xs font-black font-mono ${isChecked ? 'text-blue-700' : 'text-slate-800'}`}>
+                          {item.romano}
+                        </span>
+                        <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-colors ${
+                          isChecked ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white group-hover:border-slate-400'
+                        }`}>
+                          {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-800 block leading-tight">{item.desc}</span>
+                      <span className="text-[9px] text-slate-400 block mt-1 line-clamp-2 leading-tight">{item.ejemplos}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

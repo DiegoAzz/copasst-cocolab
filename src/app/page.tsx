@@ -38,7 +38,7 @@ import CompanyModal from '@/components/CompanyModal';
 import ManualModal from '@/components/ManualModal';
 import LoginModal from '@/components/LoginModal';
 import UserManagementModal from '@/components/UserManagementModal';
-import { storage } from '@/lib/storage';
+import { storage, formatRiesgos } from '@/lib/storage';
 import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion, UserSession } from '@/types';
 import { calcularEstructuraCopasst, calcularEstructuraCocolab, PERIODICIDAD_LEGAL } from '@/lib/colombianLaw';
 import { exportarActaPDF } from '@/lib/pdfGenerator';
@@ -361,7 +361,7 @@ export default function HomePage() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                {company.razonSocial} • NIT {company.nit} • ARL {company.arl} • Riesgo {company.nivelRiesgo} • {company.totalTrabajadores} Colaboradores
+                {company.razonSocial} • NIT {company.nit} • ARL {company.arl} • Riesgos ARL: Clase {formatRiesgos(company)} • {company.totalTrabajadores} Colaboradores
               </p>
             </div>
           </div>

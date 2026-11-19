@@ -34,7 +34,10 @@ export function exportarActaPDF(acta: Acta, empresa: CompanyProfile, evidencias:
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(71, 85, 105);
-  doc.text(`NIT: ${empresa.nit} | ARL: ${empresa.arl} | Riesgo: ${empresa.nivelRiesgo}`, pageWidth / 2, currentY + 11, { align: 'center' });
+  const riesgosTexto = empresa.nivelesRiesgo && empresa.nivelesRiesgo.length > 0
+    ? [...empresa.nivelesRiesgo].sort((a, b) => a - b).map(r => ['I', 'II', 'III', 'IV', 'V'][r - 1]).join(' y ')
+    : String(empresa.nivelRiesgo || 'I');
+  doc.text(`NIT: ${empresa.nit} | ARL: ${empresa.arl} | Riesgo ARL: ${riesgosTexto}`, pageWidth / 2, currentY + 11, { align: 'center' });
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);

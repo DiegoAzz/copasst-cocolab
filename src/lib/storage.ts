@@ -85,7 +85,8 @@ const INITIAL_COMPANY: CompanyProfile = {
   actividadEconomica: 'Transporte de carga, almacenamiento y logística integral',
   codigoCIIU: '4923 / 5210',
   arl: 'Seguros Bolívar / ARL SURA',
-  nivelRiesgo: 3,
+  nivelRiesgo: 5,
+  nivelesRiesgo: [1, 5],
   totalTrabajadores: 48,
   sedePrincipal: 'Sede Principal - Zona Industrial Cazucá',
   direccion: 'Calle 17 # 68D - 45',
@@ -577,11 +578,31 @@ const KEYS = {
   ELECCIONES: 'cocopasst_elecciones',
 };
 
+export const formatRiesgos = (company: CompanyProfile): string => {
+  const riesgos = company.nivelesRiesgo && company.nivelesRiesgo.length > 0 
+    ? company.nivelesRiesgo 
+    : [company.nivelRiesgo || 1];
+  
+  const romanos: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
+  const uniqueRiesgos = riesgos.filter((item, index) => riesgos.indexOf(item) === index);
+  const sorted = uniqueRiesgos.sort((a, b) => a - b);
+  return sorted.map(r => romanos[r] || String(r)).join(' y ');
+};
+
 export const storage = {
   getCompany: (): CompanyProfile => {
     if (typeof window === 'undefined') return INITIAL_COMPANY;
     const val = localStorage.getItem(KEYS.COMPANY);
-    return val ? JSON.parse(val) : INITIAL_COMPANY;
+    if (!val) return INITIAL_COMPANY;
+    try {
+      const parsed = JSON.parse(val);
+      if (!parsed.nivelesRiesgo || !Array.isArray(parsed.nivelesRiesgo) || parsed.nivelesRiesgo.length === 0) {
+        parsed.nivelesRiesgo = parsed.nivelRiesgo ? [parsed.nivelRiesgo] : [1, 5];
+      }
+      return parsed;
+    } catch {
+      return INITIAL_COMPANY;
+    }
   },
   saveCompany: (data: CompanyProfile) => {
     if (typeof window !== 'undefined') {
