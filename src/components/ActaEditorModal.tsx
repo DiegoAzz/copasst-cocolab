@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileText, Plus, Trash2, Check, X, Camera, PenTool, Calendar, Clock, MapPin, Download } from 'lucide-react';
+import { FileText, Plus, Trash2, Check, X, PenTool, Calendar, Download } from 'lucide-react';
 import { Acta, AsistenteActa, CompromisoActa, PuntoOrdenDia, TipoActa, Member, Evidence, CompanyProfile } from '@/types';
 import SignaturePad from './SignaturePad';
 import { exportarActaPDF } from '@/lib/pdfGenerator';
@@ -44,7 +44,6 @@ export default function ActaEditorModal({
   // Asistentes
   const [asistentes, setAsistentes] = useState<AsistenteActa[]>(() => {
     if (initialActa?.asistentes) return initialActa.asistentes;
-    // Preload from active members of that committee
     const filtered = members.filter(m => m.comite === comite);
     return filtered.map(m => ({
       nombre: m.nombre,
@@ -59,7 +58,7 @@ export default function ActaEditorModal({
   // Orden del día
   const [ordenDelDia, setOrdenDelDia] = useState<string[]>(
     initialActa?.ordenDelDia || [
-      '1. Verificación de quórum reglamentario y lectura del orden del día.',
+      '1. Verificación del quórum reglamentario y lectura del orden del día.',
       '2. Revisión del estado de compromisos del acta anterior.',
       '3. Análisis estadístico de accidentalidad, incidentes y condiciones de salud.',
       '4. Resultados de inspecciones de seguridad en terreno y evidencias fotográficas.',
@@ -77,11 +76,11 @@ export default function ActaEditorModal({
       },
       {
         punto: '2. Revisión de Compromisos Anteriores',
-        desarrollo: 'Se revisaron las tareas acordadas en la sesión previa, registrando cumplimiento del 90%.',
+        desarrollo: 'Se revisaron las tareas acordadas en la sesión previa, registrando cumplimiento satisfactorio.',
       },
       {
         punto: '3. Análisis de Accidentalidad y Reportes',
-        desarrollo: 'No se presentaron accidentes incapacitantes en el periodo evaluado. Se revisaron 3 condiciones inseguras.',
+        desarrollo: 'No se presentaron accidentes incapacitantes en el periodo evaluado. Se revisaron condiciones inseguras.',
       },
       {
         punto: '4. Inspección de Terreno y Evidencias',
@@ -116,7 +115,6 @@ export default function ActaEditorModal({
   // Tab
   const [activeTab, setActiveTab] = useState<'general' | 'asistentes' | 'orden' | 'desarrollo' | 'compromisos' | 'evidencias' | 'firmas'>('general');
 
-  // Handle Committee Switch
   const handleComiteChange = (nuevoComite: 'COPASST' | 'COCOLAB' | 'VIGIA' | 'CONJUNTO') => {
     setComite(nuevoComite);
     const year = new Date().getFullYear();
@@ -235,33 +233,33 @@ export default function ActaEditorModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[94vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-4xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[94vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 bg-slate-800/90 border-b border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-sky-500/10 text-sky-400 rounded-lg border border-sky-500/20">
+            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-200/60">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 {isEditing ? 'Editar Acta Oficial' : 'Generador Oficial de Actas'}
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400 font-mono font-bold">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-mono font-bold">
                   {consecutivo}
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Conforme al Decreto 1072/2015, Resolución 2013/1986 y Resolución 652/2012
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg">
+          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 px-4 py-2 bg-slate-850 border-b border-slate-700/80 overflow-x-auto text-xs font-semibold">
+        <div className="flex items-center gap-1.5 px-6 py-2.5 bg-slate-100/70 border-b border-slate-200 overflow-x-auto text-xs font-semibold">
           {[
             { id: 'general', label: '1. Datos Generales' },
             { id: 'asistentes', label: `2. Asistentes (${asistentes.length})` },
@@ -276,8 +274,8 @@ export default function ActaEditorModal({
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
                 activeTab === tab.id
-                  ? 'bg-sky-500 text-slate-950 font-bold shadow'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-blue-600 text-white font-bold shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               {tab.label}
@@ -286,16 +284,16 @@ export default function ActaEditorModal({
         </div>
 
         {/* Tab Body */}
-        <div className="p-5 overflow-y-auto flex-1 space-y-4 text-slate-200">
+        <div className="p-6 overflow-y-auto flex-1 space-y-4 text-slate-700">
           {activeTab === 'general' && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Comité</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Comité</label>
                   <select
                     value={comite}
                     onChange={(e) => handleComiteChange(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                   >
                     <option value="COPASST">COPASST (Seguridad y Salud)</option>
                     <option value="COCOLAB">COCOLAB (Convivencia Laboral)</option>
@@ -304,11 +302,11 @@ export default function ActaEditorModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Tipo de Acta</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Tipo de Acta</label>
                   <select
                     value={tipo}
                     onChange={(e) => setTipo(e.target.value as TipoActa)}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                   >
                     <option value="ordinaria_copasst">Acta Ordinaria Mensual</option>
                     <option value="extraordinaria_copasst">Acta Extraordinaria (Emergencia/Accidente)</option>
@@ -321,69 +319,69 @@ export default function ActaEditorModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Consecutivo / Foliación *
                   </label>
                   <input
                     type="text"
                     value={consecutivo}
                     onChange={(e) => setConsecutivo(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm font-mono text-sky-400 font-bold focus:outline-none focus:border-sky-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-mono text-blue-700 font-bold focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Título del Acta *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Título del Acta *</label>
                 <input
                   type="text"
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Fecha</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Fecha</label>
                   <div className="relative">
-                    <Calendar className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                    <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                     <input
                       type="date"
                       value={fecha}
                       onChange={(e) => setFecha(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+                      className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Horario (Inicio - Fin)</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Horario (Inicio - Fin)</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
                       value={horaInicio}
                       onChange={(e) => setHoraInicio(e.target.value)}
                       placeholder="Inicio"
-                      className="w-1/2 px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white"
+                      className="w-1/2 px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900"
                     />
                     <input
                       type="text"
                       value={horaFin}
                       onChange={(e) => setHoraFin(e.target.value)}
                       placeholder="Fin"
-                      className="w-1/2 px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white"
+                      className="w-1/2 px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Lugar / Medio</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Lugar / Medio</label>
                   <input
                     type="text"
                     value={lugar}
                     onChange={(e) => setLugar(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -393,7 +391,7 @@ export default function ActaEditorModal({
           {activeTab === 'asistentes' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Lista de verificación de quórum reglamentario según Resolución 2013/1986 o Res. 652/2012:
                 </p>
                 <button
@@ -409,7 +407,7 @@ export default function ActaEditorModal({
                     };
                     setAsistentes([...asistentes, nuevo]);
                   }}
-                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-semibold rounded-lg border border-slate-700 flex items-center gap-1"
+                  className="px-3 py-1 bg-white hover:bg-slate-50 text-blue-600 text-xs font-semibold rounded-lg border border-slate-300 flex items-center gap-1 shadow-sm"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Añadir Asistente / Invitado
@@ -420,7 +418,7 @@ export default function ActaEditorModal({
                 {asistentes.map((a, idx) => (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-800/80 border border-slate-700 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                    className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
                   >
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1 w-full">
                       <input
@@ -432,7 +430,7 @@ export default function ActaEditorModal({
                           setAsistentes(updated);
                         }}
                         placeholder="Nombre completo"
-                        className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                        className="px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
                       />
                       <input
                         type="text"
@@ -443,7 +441,7 @@ export default function ActaEditorModal({
                           setAsistentes(updated);
                         }}
                         placeholder="Cédula"
-                        className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                        className="px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
                       />
                       <input
                         type="text"
@@ -454,7 +452,7 @@ export default function ActaEditorModal({
                           setAsistentes(updated);
                         }}
                         placeholder="Cargo en empresa"
-                        className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                        className="px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
                       />
                       <input
                         type="text"
@@ -465,11 +463,11 @@ export default function ActaEditorModal({
                           setAsistentes(updated);
                         }}
                         placeholder="Rol en comité"
-                        className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                        className="px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
                       />
                     </div>
                     <div className="flex items-center gap-3 self-end sm:self-center">
-                      <label className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={a.asistio}
@@ -478,14 +476,14 @@ export default function ActaEditorModal({
                             updated[idx].asistio = e.target.checked;
                             setAsistentes(updated);
                           }}
-                          className="rounded text-sky-500"
+                          className="rounded text-blue-600"
                         />
                         Asistió
                       </label>
                       <button
                         type="button"
                         onClick={() => setAsistentes(asistentes.filter((_, i) => i !== idx))}
-                        className="text-red-400 hover:text-red-300 p-1"
+                        className="text-red-500 hover:text-red-700 p-1"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -504,12 +502,12 @@ export default function ActaEditorModal({
                   value={nuevoPuntoOrden}
                   onChange={(e) => setNuevoPuntoOrden(e.target.value)}
                   placeholder="Escribe un nuevo punto para el orden del día..."
-                  className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                  className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 />
                 <button
                   type="button"
                   onClick={agregarPuntoOrden}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-lg flex items-center gap-1"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg flex items-center gap-1 shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Agregar
@@ -520,13 +518,13 @@ export default function ActaEditorModal({
                 {ordenDelDia.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-3 bg-slate-800/80 border border-slate-700 rounded-lg text-xs"
+                    className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs"
                   >
-                    <span className="font-medium text-slate-200">{item}</span>
+                    <span className="font-medium text-slate-800">{item}</span>
                     <button
                       type="button"
                       onClick={() => eliminarPuntoOrden(idx)}
-                      className="text-red-400 hover:text-red-300 p-1"
+                      className="text-red-500 hover:text-red-700 p-1"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -538,12 +536,12 @@ export default function ActaEditorModal({
 
           {activeTab === 'desarrollo' && (
             <div className="space-y-4">
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Redacta el contenido y conclusiones alcanzadas en cada punto del orden del día:
               </p>
               {desarrolloPuntos.map((p, idx) => (
-                <div key={idx} className="p-3.5 bg-slate-800/80 border border-slate-700 rounded-xl space-y-2">
-                  <h4 className="text-xs font-bold text-sky-400">{p.punto}</h4>
+                <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                  <h4 className="text-xs font-bold text-blue-700">{p.punto}</h4>
                   <textarea
                     rows={3}
                     value={p.desarrollo}
@@ -552,7 +550,7 @@ export default function ActaEditorModal({
                       updated[idx].desarrollo = e.target.value;
                       setDesarrolloPuntos(updated);
                     }}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500 resize-none"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-blue-500 resize-none"
                   />
                 </div>
               ))}
@@ -561,34 +559,34 @@ export default function ActaEditorModal({
 
           {activeTab === 'compromisos' && (
             <div className="space-y-4">
-              <div className="p-3 bg-slate-800/90 border border-slate-700 rounded-xl space-y-2">
-                <h4 className="text-xs font-bold text-slate-200">Nuevo Compromiso / Tarea</h4>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <h4 className="text-xs font-bold text-slate-800">Nuevo Compromiso / Tarea</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <input
                     type="text"
                     value={nuevaTareaDesc}
                     onChange={(e) => setNuevaTareaDesc(e.target.value)}
                     placeholder="Descripción de la tarea o acción correctiva"
-                    className="sm:col-span-1 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                    className="sm:col-span-1 px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
                   />
                   <input
                     type="text"
                     value={nuevaTareaResp}
                     onChange={(e) => setNuevaTareaResp(e.target.value)}
                     placeholder="Responsable asignado"
-                    className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                    className="px-3 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
                   />
                   <div className="flex gap-2">
                     <input
                       type="date"
                       value={nuevaTareaFecha}
                       onChange={(e) => setNuevaTareaFecha(e.target.value)}
-                      className="flex-1 px-2 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      className="flex-1 px-2 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
                     />
                     <button
                       type="button"
                       onClick={agregarCompromiso}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded flex items-center gap-1"
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded flex items-center gap-1 shadow-sm"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Añadir
@@ -601,20 +599,20 @@ export default function ActaEditorModal({
                 {compromisos.map((c, idx) => (
                   <div
                     key={c.id || idx}
-                    className="p-3 bg-slate-800/80 border border-slate-700 rounded-xl flex items-center justify-between text-xs gap-3"
+                    className="p-3.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs gap-3 shadow-sm"
                   >
                     <div className="space-y-1">
-                      <p className="font-medium text-white">{c.descripcion}</p>
-                      <div className="flex items-center gap-4 text-slate-400 text-[11px]">
+                      <p className="font-semibold text-slate-900">{c.descripcion}</p>
+                      <div className="flex items-center gap-4 text-slate-500 text-[11px]">
                         <span>👤 {c.responsable}</span>
                         <span>📅 Límite: {c.fechaLimite}</span>
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             c.estado === 'cumplido'
-                              ? 'bg-emerald-500/20 text-emerald-400'
+                              ? 'bg-emerald-100 text-emerald-800'
                               : c.estado === 'en_proceso'
-                              ? 'bg-amber-500/20 text-amber-400'
-                              : 'bg-red-500/20 text-red-400'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-800'
                           }`}
                         >
                           {c.estado}
@@ -624,7 +622,7 @@ export default function ActaEditorModal({
                     <button
                       type="button"
                       onClick={() => setCompromisos(compromisos.filter((_, i) => i !== idx))}
-                      className="text-red-400 hover:text-red-300 p-1"
+                      className="text-red-500 hover:text-red-700 p-1"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -636,11 +634,11 @@ export default function ActaEditorModal({
 
           {activeTab === 'evidencias' && (
             <div className="space-y-3">
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Selecciona las evidencias fotográficas capturadas en terreno para anexarlas automáticamente a esta acta oficial:
               </p>
               {evidences.length === 0 ? (
-                <div className="p-6 text-center text-slate-500 border border-dashed border-slate-700 rounded-xl">
+                <div className="p-8 text-center text-slate-400 border border-dashed border-slate-300 rounded-xl">
                   No hay fotografías registradas aún en el sistema. Puedes tomarlas en el módulo de Evidencias.
                 </div>
               ) : (
@@ -651,27 +649,27 @@ export default function ActaEditorModal({
                       <div
                         key={ev.id}
                         onClick={() => toggleEvidencia(ev.id)}
-                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
+                        className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
                           isSelected
-                            ? 'bg-sky-500/15 border-sky-500'
-                            : 'bg-slate-800/80 border-slate-700 hover:border-slate-600'
+                            ? 'bg-blue-50/70 border-blue-500 shadow-sm ring-1 ring-blue-500/30'
+                            : 'bg-white border-slate-200 hover:border-slate-300'
                         }`}
                       >
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-900 border border-slate-700 flex-shrink-0">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 flex-shrink-0">
                           <img src={ev.imagenAntes} alt={ev.titulo} className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1">
-                            <h4 className="text-xs font-bold text-white truncate">{ev.titulo}</h4>
+                            <h4 className="text-xs font-bold text-slate-900 truncate">{ev.titulo}</h4>
                             <input
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => {}}
-                              className="rounded text-sky-500"
+                              className="rounded text-blue-600"
                             />
                           </div>
-                          <p className="text-[11px] text-slate-400 truncate">{ev.peligroGTC45}</p>
-                          <p className="text-[10px] text-sky-400 mt-1">
+                          <p className="text-[11px] text-slate-500 truncate">{ev.peligroGTC45}</p>
+                          <p className="text-[10px] text-blue-600 font-semibold mt-1">
                             {ev.areaLugar} • {ev.fecha}
                           </p>
                         </div>
@@ -685,7 +683,7 @@ export default function ActaEditorModal({
 
           {activeTab === 'firmas' && (
             <div className="space-y-4">
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Firmas electrónicas / digitales de los miembros acreditados:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -696,14 +694,14 @@ export default function ActaEditorModal({
                     return (
                       <div
                         key={idx}
-                        className="p-4 bg-slate-800/80 border border-slate-700 rounded-xl space-y-3"
+                        className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3"
                       >
                         <div>
-                          <h4 className="text-xs font-bold text-white">{asistente.nombre}</h4>
-                          <p className="text-[11px] text-sky-400 font-medium">
+                          <h4 className="text-xs font-bold text-slate-900">{asistente.nombre}</h4>
+                          <p className="text-[11px] text-blue-700 font-semibold">
                             {asistente.rolEnComite} ({asistente.representacion})
                           </p>
-                          <p className="text-[10px] text-slate-400">C.C. {asistente.cedula}</p>
+                          <p className="text-[10px] text-slate-500">C.C. {asistente.cedula}</p>
                         </div>
 
                         {firmaExistente?.firmaBase64 ? (
@@ -727,7 +725,7 @@ export default function ActaEditorModal({
                                 rol: asistente.rolEnComite,
                               })
                             }
-                            className="w-full py-2 bg-slate-900 hover:bg-slate-700 border border-slate-600 rounded-lg text-xs font-semibold text-sky-400 flex items-center justify-center gap-1.5 transition-colors"
+                            className="w-full py-2 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg text-xs font-semibold text-blue-600 flex items-center justify-center gap-1.5 transition-colors shadow-sm"
                           >
                             <PenTool className="w-3.5 h-3.5" />
                             Firmar en Pantalla
@@ -742,11 +740,11 @@ export default function ActaEditorModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between px-5 py-3.5 bg-slate-800/90 border-t border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-200">
           <button
             type="button"
             onClick={handleExportQuickPDF}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-600 text-xs font-semibold rounded-lg flex items-center gap-1.5"
+            className="px-3.5 py-2 bg-white hover:bg-slate-100 text-blue-600 border border-slate-300 text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
             title="Descargar vista previa en PDF"
           >
             <Download className="w-3.5 h-3.5" />
@@ -757,14 +755,14 @@ export default function ActaEditorModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-colors"
+              className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-colors shadow-sm"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={handleSaveActa}
-              className="px-5 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold rounded-lg shadow-lg flex items-center gap-1.5 transition-all"
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 transition-all"
             >
               <Check className="w-4 h-4" />
               Guardar y Foliar Acta
@@ -773,7 +771,6 @@ export default function ActaEditorModal({
         </div>
       </div>
 
-      {/* Signature Pad Submodal */}
       {activeSigner && (
         <SignaturePad
           isOpen={Boolean(activeSigner)}

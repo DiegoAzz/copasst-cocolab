@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, RefreshCw, Upload, X, Check, AlertTriangle, MapPin, Calendar, User, ShieldAlert } from 'lucide-react';
+import { Camera, RefreshCw, Upload, X, Check, AlertTriangle, MapPin } from 'lucide-react';
 import { Evidence, RiesgoGTC45, ClasificacionPeligro } from '@/types';
 import { LISTA_RIESGOS_GTC45 } from '@/lib/colombianLaw';
 
@@ -10,9 +10,10 @@ interface Props {
   onClose: () => void;
   onSave: (evidence: Evidence) => void;
   sedeDefault?: string;
+  authorName?: string;
 }
 
-export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefault }: Props) {
+export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefault, authorName }: Props) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [photoData, setPhotoData] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
   const [clasificacion, setClasificacion] = useState<ClasificacionPeligro>('Condición Insegura');
   const [sede, setSede] = useState(sedeDefault || 'Sede Principal - Cazucá');
   const [areaLugar, setAreaLugar] = useState('');
-  const [reportadoPor, setReportadoPor] = useState('Delegado COPASST en Terreno');
+  const [reportadoPor, setReportadoPor] = useState(authorName || 'Inspector en Terreno');
   const [medidaCorrectiva, setMedidaCorrectiva] = useState('');
   const [responsableAccion, setResponsableAccion] = useState('');
   const [fechaCompromiso, setFechaCompromiso] = useState('');
@@ -37,6 +38,7 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
 
   useEffect(() => {
     if (isOpen) {
+      if (authorName) setReportadoPor(authorName);
       startCamera();
     } else {
       stopCamera();
@@ -45,7 +47,7 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
     return () => {
       stopCamera();
     };
-  }, [isOpen, facingMode]);
+  }, [isOpen, facingMode, authorName]);
 
   const startCamera = async () => {
     stopCamera();
@@ -92,10 +94,8 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Draw video frame
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Draw automatic security watermark (Date, Time, SG-SST)
     const now = new Date();
     const dateStr = now.toLocaleDateString('es-CO');
     const timeStr = now.toLocaleTimeString('es-CO');
@@ -129,7 +129,6 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
         if (!ctx) return;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // Watermark
         const now = new Date();
         const watermarkText = `EVIDENCIA SG-SST | ${now.toLocaleDateString('es-CO')} ${now.toLocaleTimeString('es-CO')} | ${sede}`;
         ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
@@ -192,36 +191,36 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 bg-slate-800/80 border-b border-slate-700">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-sky-500/10 text-sky-400 rounded-lg border border-sky-500/20">
+        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-200/60">
               <Camera className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 Capturar Evidencia en Terreno
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                   GTC 45 / SG-SST
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">Inspección de condiciones y actos inseguros</p>
+              <p className="text-xs text-slate-500">Inspección de condiciones y actos inseguros</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700/60 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 space-y-4 overflow-y-auto flex-1 text-slate-200">
+        <div className="p-6 space-y-4 overflow-y-auto flex-1 text-slate-700">
           {/* Viewfinder / Photo Preview */}
-          <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 flex items-center justify-center">
+          <div className="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden border border-slate-300 flex items-center justify-center shadow-inner">
             {photoData ? (
               <div className="relative w-full h-full">
                 <img src={photoData} alt="Evidencia capturada" className="w-full h-full object-contain" />
@@ -231,7 +230,7 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                     setPhotoData(null);
                     startCamera();
                   }}
-                  className="absolute top-3 right-3 px-3 py-1.5 bg-slate-900/90 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-800 shadow-lg"
+                  className="absolute top-3 right-3 px-3 py-1.5 bg-white/95 text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-100 shadow-md"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   Repetir Foto
@@ -246,12 +245,11 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                   muted
                   className="w-full h-full object-cover"
                 />
-                {/* Camera Overlay Controls */}
                 <div className="absolute inset-x-0 bottom-3 flex items-center justify-center gap-4 px-4">
                   <button
                     type="button"
                     onClick={switchCamera}
-                    className="p-2.5 bg-slate-900/80 hover:bg-slate-800 text-slate-200 rounded-full border border-slate-600 backdrop-blur-sm"
+                    className="p-2.5 bg-white/90 hover:bg-white text-slate-700 rounded-full border border-slate-300 shadow"
                     title="Cambiar Cámara Trasera/Frontal"
                   >
                     <RefreshCw className="w-4 h-4" />
@@ -260,7 +258,7 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                   <button
                     type="button"
                     onClick={takeSnapshot}
-                    className="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-full shadow-lg flex items-center gap-2 transform active:scale-95 transition-all text-sm"
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg flex items-center gap-2 transform active:scale-95 transition-all text-sm"
                   >
                     <Camera className="w-4 h-4" />
                     Tomar Foto
@@ -269,7 +267,7 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-2.5 bg-slate-900/80 hover:bg-slate-800 text-slate-200 rounded-full border border-slate-600 backdrop-blur-sm"
+                    className="p-2.5 bg-white/90 hover:bg-white text-slate-700 rounded-full border border-slate-300 shadow"
                     title="Subir de Galería"
                   >
                     <Upload className="w-4 h-4" />
@@ -277,16 +275,16 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                 </div>
               </div>
             ) : (
-              <div className="p-6 text-center space-y-3">
+              <div className="p-6 text-center space-y-3 bg-slate-900 w-full h-full flex flex-col items-center justify-center">
                 <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto" />
                 <p className="text-xs text-slate-300 max-w-sm mx-auto">
-                  {cameraError || 'Cámara no activa o sin permisos.'}
+                  {cameraError || 'Cámara no activa o sin permisos concedidos.'}
                 </p>
                 <div className="flex items-center justify-center gap-3">
                   <button
                     type="button"
                     onClick={startCamera}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-semibold rounded-lg border border-slate-600 flex items-center gap-1.5"
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-semibold rounded-lg border border-slate-700 flex items-center gap-1.5"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     Reintentar Cámara
@@ -294,10 +292,10 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    Subir desde Archivo / Galería
+                    Subir desde Galería / Archivo
                   </button>
                 </div>
               </div>
@@ -315,7 +313,7 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
           {/* Form Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Título del Hallazgo / Riesgo *
               </label>
               <input
@@ -323,18 +321,18 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
                 placeholder="Ej: Cable de alta tensión expuesto en zona de lavado"
-                className="w-full px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Clasificación del Evento
               </label>
               <select
                 value={clasificacion}
                 onChange={(e) => setClasificacion(e.target.value as ClasificacionPeligro)}
-                className="w-full px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-500"
               >
                 <option value="Condición Insegura">Condición Insegura</option>
                 <option value="Acto Inseguro">Acto Inseguro</option>
@@ -345,13 +343,13 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Peligro según Guía Técnica GTC 45 *
               </label>
               <select
                 value={peligroGTC45}
                 onChange={(e) => setPeligroGTC45(e.target.value as RiesgoGTC45)}
-                className="w-full px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-blue-500"
               >
                 {LISTA_RIESGOS_GTC45.map((r) => (
                   <option key={r} value={r}>
@@ -362,22 +360,22 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Sede de la Empresa
               </label>
               <div className="relative">
-                <MapPin className="w-4 h-4 text-slate-500 absolute left-2.5 top-2.5" />
+                <MapPin className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
                 <input
                   type="text"
                   value={sede}
                   onChange={(e) => setSede(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-sky-500"
+                  className="w-full pl-8 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Área / Lugar Específico *
               </label>
               <input
@@ -385,12 +383,12 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                 value={areaLugar}
                 onChange={(e) => setAreaLugar(e.target.value)}
                 placeholder="Ej: Bodega 2, Rampa de Despacho 4"
-                className="w-full px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Descripción Detallada del Hallazgo
               </label>
               <textarea
@@ -398,12 +396,12 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 placeholder="Describe qué observaste, causas potenciales y afectación a la integridad o instalaciones..."
-                className="w-full px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 resize-none"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Medida Correctiva Propuesta
               </label>
               <input
@@ -411,12 +409,12 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                 value={medidaCorrectiva}
                 onChange={(e) => setMedidaCorrectiva(e.target.value)}
                 placeholder="Ej: Aislar cables en tubería conduit"
-                className="w-full px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Responsable Asignado & Fecha Límite
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -425,13 +423,13 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
                   value={responsableAccion}
                   onChange={(e) => setResponsableAccion(e.target.value)}
                   placeholder="Responsable"
-                  className="px-2.5 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                  className="px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 />
                 <input
                   type="date"
                   value={fechaCompromiso}
                   onChange={(e) => setFechaCompromiso(e.target.value)}
-                  className="px-2 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500"
+                  className="px-2 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
@@ -439,22 +437,22 @@ export default function CameraCaptureModal({ isOpen, onClose, onSave, sedeDefaul
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between px-5 py-3.5 bg-slate-800/80 border-t border-slate-700">
-          <p className="text-[11px] text-slate-400 hidden sm:block">
+        <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-200">
+          <p className="text-[11px] text-slate-500 hidden sm:block">
             * Se estampará automáticamente fecha, hora y marca de agua del SG-SST
           </p>
           <div className="flex items-center gap-2.5 ml-auto">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-colors"
+              className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-colors shadow-sm"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="px-5 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold rounded-lg shadow-lg flex items-center gap-1.5 transition-all"
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1.5 transition-all"
             >
               <Check className="w-4 h-4" />
               Guardar Evidencia

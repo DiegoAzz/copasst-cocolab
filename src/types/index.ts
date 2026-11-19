@@ -1,3 +1,29 @@
+export type UserRole = 
+  | 'SUPER_ADMIN_RRHH' 
+  | 'ADMIN_SST' 
+  | 'COPASST' 
+  | 'COCOLAB' 
+  | 'AMBOS_COMITES' 
+  | 'COLABORADOR';
+
+export interface UserAccount {
+  id: string;
+  nombre: string;
+  email: string;
+  password?: string;
+  cedula: string;
+  cargo: string;
+  area: string;
+  rol: UserRole;
+  accesoCopasst: boolean;
+  accesoCocolab: boolean;
+  cargoEnComite?: string;
+  activo: boolean;
+  createdAt: string;
+}
+
+export type UserSession = UserAccount;
+
 export type RiesgoGTC45 = 
   | 'Biológico (Virus, Bacterias, Hongos)'
   | 'Físico (Ruido, Iluminación, Temperaturas)'

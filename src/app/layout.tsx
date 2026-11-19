@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const viewport: Viewport = {
-  themeColor: '#0f172a',
+  themeColor: '#ffffff',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'CoCoPASST',
   },
 };
@@ -42,14 +42,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="dark">
+    <html lang="es">
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-sky-500 selection:text-slate-950`}
+        className={`${geistSans.variable} ${geistMono.variable} bg-slate-50 text-slate-900 min-h-screen antialiased selection:bg-blue-500 selection:text-white`}
       >
         {children}
         <script

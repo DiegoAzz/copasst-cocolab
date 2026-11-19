@@ -24,6 +24,9 @@ import {
   Eye,
   Info,
   UserCheck,
+  BookOpen,
+  LogIn,
+  User,
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
@@ -32,14 +35,21 @@ import ActaEditorModal from '@/components/ActaEditorModal';
 import QuejaModal from '@/components/QuejaModal';
 import ElectionModal from '@/components/ElectionModal';
 import CompanyModal from '@/components/CompanyModal';
+import ManualModal from '@/components/ManualModal';
+import LoginModal from '@/components/LoginModal';
+import UserManagementModal from '@/components/UserManagementModal';
 import { storage } from '@/lib/storage';
-import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion } from '@/types';
+import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion, UserSession } from '@/types';
 import { calcularEstructuraCopasst, calcularEstructuraCocolab, PERIODICIDAD_LEGAL } from '@/lib/colombianLaw';
 import { exportarActaPDF } from '@/lib/pdfGenerator';
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState('dashboard');
+
+  // Session & RBAC
+  const [session, setSession] = useState<UserSession | null>(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // App Data State
   const [company, setCompany] = useState<CompanyProfile>(storage.getCompany());
@@ -56,6 +66,8 @@ export default function HomePage() {
   const [isQuejaModalOpen, setIsQuejaModalOpen] = useState(false);
   const [isElectionModalOpen, setIsElectionModalOpen] = useState(false);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   // Evidence Filter
   const [evidenceFilter, setEvidenceFilter] = useState<'todos' | 'abierto' | 'en_proceso' | 'subsanado'>('todos');
@@ -65,6 +77,7 @@ export default function HomePage() {
 
   useEffect(() => {
     setMounted(true);
+    setSession(storage.getSession());
 
     const refreshData = () => {
       setCompany(storage.getCompany());
@@ -75,14 +88,22 @@ export default function HomePage() {
       setEleccion(storage.getEleccion());
     };
 
+    const refreshSession = () => {
+      setSession(storage.getSession());
+    };
+
     window.addEventListener('cocopasst_data_changed', refreshData);
-    return () => window.removeEventListener('cocopasst_data_changed', refreshData);
+    window.addEventListener('cocopasst_session_changed', refreshSession);
+    return () => {
+      window.removeEventListener('cocopasst_data_changed', refreshData);
+      window.removeEventListener('cocopasst_session_changed', refreshSession);
+    };
   }, []);
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-sky-400 font-bold">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-blue-600 font-bold">
           <Shield className="w-8 h-8 animate-spin" />
           <span>Cargando plataforma SG-SST...</span>
         </div>
@@ -97,7 +118,6 @@ export default function HomePage() {
   // Stats
   const evidenciasAbiertas = evidences.filter(e => e.estado === 'abierto').length;
   const evidenciasSubsanadas = evidences.filter(e => e.estado === 'subsanado').length;
-  const compromisosPendientes = actas.flatMap(a => a.compromisos).filter(c => c.estado !== 'cumplido').length;
   const actasCopasstCount = actas.filter(a => a.comite === 'COPASST').length;
   const actasCocolabCount = actas.filter(a => a.comite === 'COCOLAB').length;
 
@@ -137,7 +157,6 @@ export default function HomePage() {
   };
 
   const handleGenerarActaPosesion = (el: ProcesoEleccion) => {
-    // Ordenar candidatos por votos
     const sorted = [...el.candidatos].sort((a, b) => b.votos - a.votos);
     const ganadoresTrabajadores = sorted.slice(0, copasstReq.totalPrincipalesPorParte + copasstReq.totalSuplentesPorParte);
 
@@ -219,22 +238,41 @@ export default function HomePage() {
     setEvidences(updated);
   };
 
+  const handleLogin = (u: UserSession) => {
+    storage.setSession(u);
+    setSession(u);
+  };
+
+  // RBAC checks
+  const isWendyRRHH = session?.rol === 'SUPER_ADMIN_RRHH';
+  const isAdmin = session?.rol === 'ADMIN_SST' || isWendyRRHH;
+  const isCopasstMember = session?.rol === 'COPASST' || session?.rol === 'AMBOS_COMITES' || isAdmin;
+  const isCocolabMember = session?.rol === 'COCOLAB' || session?.rol === 'AMBOS_COMITES' || isAdmin;
+  const isColaborador = session?.rol === 'COLABORADOR';
+  const canManageUsers = isWendyRRHH || isAdmin || session?.rol === 'AMBOS_COMITES';
+
+  const canAccessCocolabPrivates = isCocolabMember || isAdmin;
+
   const filteredEvidences = evidences.filter(e => {
     if (evidenceFilter === 'todos') return true;
     return e.estado === evidenceFilter;
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-20 md:pb-8">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col pb-20 md:pb-8">
       {/* Navbar */}
       <Navbar
         company={company}
+        session={session}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
+        onOpenUsers={() => setIsUserModalOpen(true)}
         onOpenCamera={() => setIsCameraOpen(true)}
         onOpenActa={() => {
           setSelectedActaForEdit(undefined);
           setIsActaModalOpen(true);
         }}
         onOpenCompany={() => setIsCompanyModalOpen(true)}
+        onOpenManual={() => setIsManualModalOpen(true)}
         activeSection={activeSection}
         setActiveSection={setActiveSection}
       />
@@ -242,45 +280,46 @@ export default function HomePage() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Banner Normativo Oficial Mintrabajo */}
-        <div className="bg-gradient-to-r from-slate-900 via-sky-950/40 to-slate-900 border border-sky-500/20 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-          <div className="flex items-center gap-3.5">
-            <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 flex-shrink-0">
-              <Shield className="w-6 h-6 stroke-[2.5]" />
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 flex-shrink-0">
+              <Shield className="w-7 h-7 stroke-[2.5]" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-base sm:text-lg font-bold text-white">
+                <h1 className="text-base sm:text-lg font-bold text-slate-900">
                   Sistema de Gestión SG-SST • COPASST & COCOLAB
                 </h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
                   Decreto 1072/2015
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                   Res. 0312/2019
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-1">
                 {company.razonSocial} • NIT {company.nit} • ARL {company.arl} • Riesgo {company.nivelRiesgo} • {company.totalTrabajadores} Colaboradores
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+            <button
+              onClick={() => setIsManualModalOpen(true)}
+              className="text-xs text-blue-700 hover:text-blue-900 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors font-bold shadow-sm"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Manual de Uso</span>
+            </button>
             <a
               href="https://www.mintrabajo.gov.co/relaciones-laborales/riesgos-laborales/sistema-de-gestion-de-seguridad-y-salud-en-el-trabajo"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/80 hover:bg-slate-700/60 transition-colors"
+              className="text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 hover:bg-slate-200 transition-colors font-medium"
             >
               <span>Normativa Mintrabajo</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
-            <button
-              onClick={() => setIsCompanyModalOpen(true)}
-              className="text-xs text-slate-300 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/80 hover:bg-slate-700/60 transition-colors"
-            >
-              Configurar Empresa
-            </button>
           </div>
         </div>
 
@@ -289,74 +328,101 @@ export default function HomePage() {
           <div className="space-y-6">
             {/* Quick Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
-                <div className="flex items-center justify-between text-slate-400 mb-2">
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center justify-between text-slate-500 mb-2">
                   <span className="text-xs font-semibold">Evidencias en Campo</span>
-                  <Camera className="w-4 h-4 text-sky-400" />
+                  <Camera className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-white">{evidences.length}</span>
-                  <span className="text-[11px] text-amber-400 font-medium">({evidenciasAbiertas} abiertas)</span>
+                  <span className="text-2xl font-black text-slate-900">{evidences.length}</span>
+                  <span className="text-[11px] text-amber-600 font-medium">({evidenciasAbiertas} abiertas)</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">Inspecciones con fotos GTC 45</p>
+                <p className="text-[10px] text-slate-400 mt-1">Inspecciones con fotos GTC 45</p>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
-                <div className="flex items-center justify-between text-slate-400 mb-2">
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center justify-between text-slate-500 mb-2">
                   <span className="text-xs font-semibold">Actas Foliadas</span>
-                  <FileText className="w-4 h-4 text-emerald-400" />
+                  <FileText className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-white">{actas.length}</span>
-                  <span className="text-[11px] text-emerald-400 font-medium">Foliadas y Firmadas</span>
+                  <span className="text-2xl font-black text-slate-900">{actas.length}</span>
+                  <span className="text-[11px] text-emerald-700 font-medium">Foliadas y Firmadas</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">Custodia legal de 20 años</p>
+                <p className="text-[10px] text-slate-400 mt-1">Custodia legal de 20 años</p>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
-                <div className="flex items-center justify-between text-slate-400 mb-2">
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center justify-between text-slate-500 mb-2">
                   <span className="text-xs font-semibold">COPASST Mensual</span>
-                  <ShieldAlert className="w-4 h-4 text-sky-400" />
+                  <ShieldAlert className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-white">{actasCopasstCount}</span>
-                  <span className="text-[11px] text-sky-400 font-medium">Reuniones</span>
+                  <span className="text-2xl font-black text-slate-900">{actasCopasstCount}</span>
+                  <span className="text-[11px] text-blue-700 font-medium">Reuniones</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">Obligatoria mensual (Res. 2013)</p>
+                <p className="text-[10px] text-slate-400 mt-1">Obligatoria mensual (Res. 2013)</p>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
-                <div className="flex items-center justify-between text-slate-400 mb-2">
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center justify-between text-slate-500 mb-2">
                   <span className="text-xs font-semibold">COCOLAB Convivencia</span>
-                  <HeartHandshake className="w-4 h-4 text-rose-400" />
+                  <HeartHandshake className="w-4 h-4 text-rose-600" />
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-white">{actasCocolabCount}</span>
-                  <span className="text-[11px] text-rose-400 font-medium">Trimestrales</span>
+                  <span className="text-2xl font-black text-slate-900">{actasCocolabCount}</span>
+                  <span className="text-[11px] text-rose-700 font-medium">Trimestrales</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">Ley 1010/06 & Ley 2365/24</p>
+                <p className="text-[10px] text-slate-400 mt-1">Ley 1010/06 & Ley 2365/24</p>
               </div>
             </div>
 
-            {/* Action Bar (Camera Quick Access & Report) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Wendy RRHH User Management Banner if authorized */}
+            {canManageUsers && (
+              <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 border border-purple-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-purple-600 text-white rounded-xl shadow-sm">
+                    <UserCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                      Módulo de Gestión de Usuarios y Comités
+                      <span className="text-[10px] bg-purple-200 text-purple-900 font-bold px-2 py-0.5 rounded-full">Wendy RRHH / Validadora</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-600">
+                      Crea y administra usuarios asignando permisos independientes para COPASST, COCOLAB o Ambos comités.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsUserModalOpen(true)}
+                  className="w-full sm:w-auto px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Gestionar Usuarios</span>
+                </button>
+              </div>
+            )}
+
+            {/* Action Bar (Camera, Actas, COCOLAB, Manual) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Box 1: Tomar Foto en Terreno */}
               <div
                 onClick={() => setIsCameraOpen(true)}
-                className="group p-5 bg-gradient-to-br from-slate-900 to-sky-950/30 border border-sky-500/30 rounded-2xl cursor-pointer hover:border-sky-400 transition-all shadow-md flex items-center justify-between"
+                className="group p-4 bg-white border border-slate-200 rounded-2xl cursor-pointer hover:border-blue-500 hover:shadow-md transition-all shadow-sm flex items-center justify-between"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="p-2 bg-sky-500/20 text-sky-400 rounded-xl group-hover:scale-110 transition-transform">
+                    <span className="p-2 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-110 transition-transform">
                       <Camera className="w-5 h-5" />
                     </span>
-                    <h3 className="text-sm font-bold text-white">Capturar Evidencia en Terreno</h3>
+                    <h3 className="text-xs font-bold text-slate-900">Foto Evidencia</h3>
                   </div>
-                  <p className="text-xs text-slate-400">
-                    Toma fotos con la cámara del celular y marca de agua automática.
+                  <p className="text-[11px] text-slate-500">
+                    Cámara en terreno con marca de agua automática.
                   </p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-sky-400 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 group-hover:text-blue-600 transition-all" />
               </div>
 
               {/* Box 2: Redactar Acta Oficial */}
@@ -365,54 +431,73 @@ export default function HomePage() {
                   setSelectedActaForEdit(undefined);
                   setIsActaModalOpen(true);
                 }}
-                className="group p-5 bg-gradient-to-br from-slate-900 to-emerald-950/30 border border-emerald-500/30 rounded-2xl cursor-pointer hover:border-emerald-400 transition-all shadow-md flex items-center justify-between"
+                className="group p-4 bg-white border border-slate-200 rounded-2xl cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all shadow-sm flex items-center justify-between"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl group-hover:scale-110 transition-transform">
+                    <span className="p-2 bg-emerald-50 text-emerald-600 rounded-xl group-hover:scale-110 transition-transform">
                       <FileText className="w-5 h-5" />
                     </span>
-                    <h3 className="text-sm font-bold text-white">Crear Acta Foliada</h3>
+                    <h3 className="text-xs font-bold text-slate-900">Crear Acta Foliada</h3>
                   </div>
-                  <p className="text-xs text-slate-400">
-                    Genera actas con firmas en pantalla, fotos y exportación a PDF.
+                  <p className="text-[11px] text-slate-500">
+                    Firmas digitales, fotos y exportación a PDF.
                   </p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-emerald-400 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 group-hover:text-emerald-600 transition-all" />
               </div>
 
               {/* Box 3: Radicar Queja Convivencia */}
               <div
                 onClick={() => setIsQuejaModalOpen(true)}
-                className="group p-5 bg-gradient-to-br from-slate-900 to-rose-950/30 border border-rose-500/30 rounded-2xl cursor-pointer hover:border-rose-400 transition-all shadow-md flex items-center justify-between"
+                className="group p-4 bg-white border border-slate-200 rounded-2xl cursor-pointer hover:border-rose-500 hover:shadow-md transition-all shadow-sm flex items-center justify-between"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="p-2 bg-rose-500/20 text-rose-400 rounded-xl group-hover:scale-110 transition-transform">
+                    <span className="p-2 bg-rose-50 text-rose-600 rounded-xl group-hover:scale-110 transition-transform">
                       <Lock className="w-5 h-5" />
                     </span>
-                    <h3 className="text-sm font-bold text-white">Canal Confidencial COCOLAB</h3>
+                    <h3 className="text-xs font-bold text-slate-900">Canal COCOLAB</h3>
                   </div>
-                  <p className="text-xs text-slate-400">
-                    Radicación de quejas de acoso laboral o sexual (Ley 2365 de 2024).
+                  <p className="text-[11px] text-slate-500">
+                    Quejas confidenciales y Ley 2365/2024.
                   </p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-rose-400 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 group-hover:text-rose-600 transition-all" />
+              </div>
+
+              {/* Box 4: Manual de Uso */}
+              <div
+                onClick={() => setIsManualModalOpen(true)}
+                className="group p-4 bg-white border border-slate-200 rounded-2xl cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all shadow-sm flex items-center justify-between"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 bg-indigo-50 text-indigo-600 rounded-xl group-hover:scale-110 transition-transform">
+                      <BookOpen className="w-5 h-5" />
+                    </span>
+                    <h3 className="text-xs font-bold text-slate-900">Manual de Uso</h3>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Guía operativa y soporte legal SG-SST.
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 group-hover:text-indigo-600 transition-all" />
               </div>
             </div>
 
             {/* Split Sections: Recent Evidences & Recent Actas */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Evidences Photo Card */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Camera className="w-4 h-4 text-sky-400" />
-                    <h3 className="text-sm font-bold text-white">Últimas Evidencias Fotográficas</h3>
+                    <Camera className="w-4 h-4 text-blue-600" />
+                    <h3 className="text-sm font-bold text-slate-900">Últimas Evidencias Fotográficas</h3>
                   </div>
                   <button
                     onClick={() => setActiveSection('evidencias')}
-                    className="text-xs text-sky-400 hover:underline font-semibold"
+                    className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
                   >
                     Ver todas ({evidences.length})
                   </button>
@@ -422,19 +507,19 @@ export default function HomePage() {
                   {evidences.slice(0, 3).map((ev) => (
                     <div
                       key={ev.id}
-                      className="p-3 bg-slate-800/60 border border-slate-700/70 rounded-xl flex items-center justify-between gap-3"
+                      className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
                           onClick={() => setPreviewImage(ev.imagenAntes)}
-                          className="w-14 h-14 rounded-lg bg-slate-950 overflow-hidden border border-slate-700 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                          className="w-14 h-14 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
                         >
                           <img src={ev.imagenAntes} alt={ev.titulo} className="w-full h-full object-cover" />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-white truncate">{ev.titulo}</h4>
-                          <p className="text-[11px] text-slate-400 truncate">{ev.peligroGTC45}</p>
-                          <p className="text-[10px] text-slate-500">
+                          <h4 className="text-xs font-bold text-slate-900 truncate">{ev.titulo}</h4>
+                          <p className="text-[11px] text-slate-500 truncate">{ev.peligroGTC45}</p>
+                          <p className="text-[10px] text-slate-400">
                             {ev.areaLugar} • {ev.fecha}
                           </p>
                         </div>
@@ -444,10 +529,10 @@ export default function HomePage() {
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             ev.estado === 'subsanado'
-                              ? 'bg-emerald-500/20 text-emerald-400'
+                              ? 'bg-emerald-100 text-emerald-800'
                               : ev.estado === 'en_proceso'
-                              ? 'bg-amber-500/20 text-amber-400'
-                              : 'bg-red-500/20 text-red-400'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-800'
                           }`}
                         >
                           {ev.estado}
@@ -455,7 +540,7 @@ export default function HomePage() {
                         {ev.estado !== 'subsanado' && (
                           <button
                             onClick={() => handleSubsanarEvidencia(ev)}
-                            className="text-[10px] text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
+                            className="text-[10px] text-emerald-700 hover:underline flex items-center gap-1 font-semibold"
                           >
                             <Check className="w-3 h-3" />
                             Marcar Subsanado
@@ -468,15 +553,15 @@ export default function HomePage() {
               </div>
 
               {/* Recent Actas Card */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-emerald-400" />
-                    <h3 className="text-sm font-bold text-white">Actas Oficiales Recientes</h3>
+                    <FileText className="w-4 h-4 text-emerald-600" />
+                    <h3 className="text-sm font-bold text-slate-900">Actas Oficiales Recientes</h3>
                   </div>
                   <button
                     onClick={() => setActiveSection('actas')}
-                    className="text-xs text-emerald-400 hover:underline font-semibold"
+                    className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
                   >
                     Ver todas ({actas.length})
                   </button>
@@ -486,19 +571,19 @@ export default function HomePage() {
                   {actas.slice(0, 3).map((acta) => (
                     <div
                       key={acta.id}
-                      className="p-3 bg-slate-800/60 border border-slate-700/70 rounded-xl flex items-center justify-between gap-3"
+                      className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3"
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-bold text-sky-400">
+                          <span className="text-xs font-mono font-bold text-blue-700">
                             {acta.consecutivo}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-slate-700 text-slate-300 font-medium">
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-medium">
                             {acta.comite}
                           </span>
                         </div>
-                        <h4 className="text-xs font-semibold text-white truncate mt-0.5">{acta.titulo}</h4>
-                        <p className="text-[10px] text-slate-400">
+                        <h4 className="text-xs font-semibold text-slate-900 truncate mt-0.5">{acta.titulo}</h4>
+                        <p className="text-[10px] text-slate-500">
                           Fecha: {acta.fecha} • {acta.asistentes.length} Asistentes • {acta.compromisos.length} Compromisos
                         </p>
                       </div>
@@ -506,7 +591,7 @@ export default function HomePage() {
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         <button
                           onClick={() => exportarActaPDF(acta, company, evidences)}
-                          className="p-2 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-lg border border-slate-700 transition-colors"
+                          className="p-2 bg-white hover:bg-slate-100 text-blue-600 rounded-lg border border-slate-200 transition-colors shadow-sm"
                           title="Descargar PDF Foliado"
                         >
                           <Download className="w-4 h-4" />
@@ -519,26 +604,26 @@ export default function HomePage() {
             </div>
 
             {/* Matrix Legal Periodicidad */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-3">
-              <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2">
-                <Info className="w-4 h-4 text-sky-400" />
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-sm">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                <Info className="w-4 h-4 text-blue-600" />
                 Marco Legal y Obligaciones Periódicas en Colombia
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-400">
-                <div className="p-3 bg-slate-800/50 rounded-xl border border-slate-700/60">
-                  <span className="font-bold text-white block mb-1">Reuniones Mensuales COPASST</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="font-bold text-slate-900 block mb-1">Reuniones Mensuales COPASST</span>
                   <p className="text-[11px]">{PERIODICIDAD_LEGAL.copasstReuniones}</p>
-                  <p className="text-[10px] text-sky-400 mt-1 font-mono">{PERIODICIDAD_LEGAL.copasstDedicacion}</p>
+                  <p className="text-[10px] text-blue-600 mt-1 font-mono">{PERIODICIDAD_LEGAL.copasstDedicacion}</p>
                 </div>
-                <div className="p-3 bg-slate-800/50 rounded-xl border border-slate-700/60">
-                  <span className="font-bold text-white block mb-1">Reuniones Trimestrales COCOLAB</span>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="font-bold text-slate-900 block mb-1">Reuniones Trimestrales COCOLAB</span>
                   <p className="text-[11px]">{PERIODICIDAD_LEGAL.cocolabReuniones}</p>
-                  <p className="text-[10px] text-rose-400 mt-1 font-mono">Reserva legal absoluta</p>
+                  <p className="text-[10px] text-rose-600 mt-1 font-mono">Reserva legal absoluta</p>
                 </div>
-                <div className="p-3 bg-slate-800/50 rounded-xl border border-slate-700/60">
-                  <span className="font-bold text-white block mb-1">Custodia de Archivos (20 Años)</span>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <span className="font-bold text-slate-900 block mb-1">Custodia de Archivos (20 Años)</span>
                   <p className="text-[11px]">{PERIODICIDAD_LEGAL.custodiaDocumental}</p>
-                  <p className="text-[10px] text-emerald-400 mt-1 font-mono">Periodo de comités: 2 años</p>
+                  <p className="text-[10px] text-emerald-600 mt-1 font-mono">Periodo de comités: 2 años</p>
                 </div>
               </div>
             </div>
@@ -550,11 +635,11 @@ export default function HomePage() {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <ShieldAlert className="w-5 h-5 text-sky-400" />
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-blue-600" />
                   Comité Paritario de Seguridad y Salud en el Trabajo (COPASST)
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Resolución 2013 de 1986, Decreto Ley 1295 de 1994 y Decreto 1072 de 2015
                 </p>
               </div>
@@ -562,32 +647,34 @@ export default function HomePage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsCameraOpen(true)}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-white hover:bg-slate-50 text-blue-600 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                 >
                   <Camera className="w-3.5 h-3.5" />
                   Nueva Inspección
                 </button>
-                <button
-                  onClick={() => {
-                    setSelectedActaForEdit(undefined);
-                    setIsActaModalOpen(true);
-                  }}
-                  className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  Nueva Acta COPASST
-                </button>
+                {session?.rol !== 'COLABORADOR' && (
+                  <button
+                    onClick={() => {
+                      setSelectedActaForEdit(undefined);
+                      setIsActaModalOpen(true);
+                    }}
+                    className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Nueva Acta COPASST
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Members Grid */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-white flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-sky-400" />
+                <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-blue-600" />
                   Miembros Activos del COPASST ({members.filter(m => m.comite === 'COPASST').length})
                 </h3>
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-slate-500">
                   Vigencia: {company.vigenciaComitesDesde} al {company.vigenciaComitesHasta}
                 </span>
               </div>
@@ -598,26 +685,26 @@ export default function HomePage() {
                   .map((m) => (
                     <div
                       key={m.id}
-                      className="p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl space-y-2"
+                      className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2"
                     >
                       <div className="flex items-center justify-between">
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
                             m.representacion === 'Empleador'
-                              ? 'bg-sky-500/15 text-sky-400'
-                              : 'bg-emerald-500/15 text-emerald-400'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-emerald-100 text-emerald-800'
                           }`}
                         >
                           {m.representacion}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-mono">{m.condicion}</span>
+                        <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-white">{m.nombre}</h4>
-                        <p className="text-[11px] text-sky-400 font-medium">{m.rol}</p>
-                        <p className="text-[10px] text-slate-400 truncate">{m.cargo}</p>
+                        <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
+                        <p className="text-[11px] text-blue-700 font-medium">{m.rol}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
                       </div>
-                      <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-700/50">
+                      <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-200">
                         C.C. {m.cedula} • Posesión: {m.fechaPosesion}
                       </div>
                     </div>
@@ -626,9 +713,9 @@ export default function HomePage() {
             </div>
 
             {/* Actas de COPASST */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-              <h3 className="text-xs font-bold text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-sky-400" />
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+              <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-blue-600" />
                 Historial de Actas y Reuniones Mensuales de COPASST
               </h3>
 
@@ -638,22 +725,22 @@ export default function HomePage() {
                   .map((acta) => (
                     <div
                       key={acta.id}
-                      className="p-4 bg-slate-800/60 border border-slate-700/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                      className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-sky-400">
+                          <span className="font-mono text-xs font-bold text-blue-700">
                             {acta.consecutivo}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 bg-slate-700 text-slate-300 rounded font-medium">
+                          <span className="text-[10px] px-2 py-0.5 bg-slate-200 text-slate-700 rounded font-medium">
                             {acta.tipo.replace('_', ' ').toUpperCase()}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-white mt-1">{acta.titulo}</h4>
-                        <p className="text-xs text-slate-400">
+                        <h4 className="text-sm font-bold text-slate-900 mt-1">{acta.titulo}</h4>
+                        <p className="text-xs text-slate-500">
                           Fecha: {acta.fecha} ({acta.horaInicio} - {acta.horaFin}) • {acta.lugar}
                         </p>
-                        <div className="flex items-center gap-4 text-xs text-slate-400 mt-2">
+                        <div className="flex items-center gap-4 text-xs text-slate-500 mt-2">
                           <span>👥 {acta.asistentes.filter(a => a.asistio).length} Asistieron</span>
                           <span>📋 {acta.compromisos.length} Compromisos</span>
                           <span>📷 {acta.evidenciasIds?.length || 0} Evidencias Vinculadas</span>
@@ -661,18 +748,20 @@ export default function HomePage() {
                       </div>
 
                       <div className="flex items-center gap-2 self-end sm:self-center">
-                        <button
-                          onClick={() => {
-                            setSelectedActaForEdit(acta);
-                            setIsActaModalOpen(true);
-                          }}
-                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold border border-slate-700"
-                        >
-                          Ver / Editar
-                        </button>
+                        {session?.rol !== 'COLABORADOR' && (
+                          <button
+                            onClick={() => {
+                              setSelectedActaForEdit(acta);
+                              setIsActaModalOpen(true);
+                            }}
+                            className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-300 shadow-sm"
+                          >
+                            Editar
+                          </button>
+                        )}
                         <button
                           onClick={() => exportarActaPDF(acta, company, evidences)}
-                          className="px-3.5 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1 shadow"
+                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-1 shadow-sm"
                         >
                           <Download className="w-3.5 h-3.5" />
                           PDF Oficial
@@ -690,11 +779,11 @@ export default function HomePage() {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <HeartHandshake className="w-5 h-5 text-rose-400" />
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <HeartHandshake className="w-5 h-5 text-rose-600" />
                   Comité de Convivencia Laboral (COCOLAB)
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Ley 1010 de 2006, Resoluciones 652 y 1356 de 2012, y Ley 2365 de 2024
                 </p>
               </div>
@@ -702,39 +791,58 @@ export default function HomePage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsQuejaModalOpen(true)}
-                  className="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow"
+                  className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm"
                 >
                   <Lock className="w-3.5 h-3.5" />
                   Radicar Queja Confidencial
                 </button>
-                <button
-                  onClick={() => {
-                    setSelectedActaForEdit(undefined);
-                    setIsActaModalOpen(true);
-                  }}
-                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  Acta Trimestral
-                </button>
+                {canAccessCocolabPrivates && (
+                  <button
+                    onClick={() => {
+                      setSelectedActaForEdit(undefined);
+                      setIsActaModalOpen(true);
+                    }}
+                    className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Acta Trimestral
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Aviso Confidencialidad */}
-            <div className="p-4 bg-rose-950/30 border border-rose-500/30 rounded-2xl flex items-start gap-3 text-xs text-slate-300">
-              <Lock className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3 text-xs text-rose-900">
+              <Lock className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-rose-300 block mb-0.5">
+                <span className="font-bold text-rose-950 block mb-0.5">
                   Garantía de Confidencialidad y Reserva Absoluta
                 </span>
                 El Comité de Convivencia Laboral actúa como instancia preventiva y concertadora. Toda deliberación, entrevista o queja tiene carácter confidencial por mandato de la Resolución 652/2012. En casos de Acoso Sexual bajo la Ley 2365 de 2024, se aplican medidas cautelares inmediatas sin revictimización.
               </div>
             </div>
 
+            {/* Restricción de Acceso para miembros de COPASST */}
+            {isCopasstMember && (
+              <div className="p-6 bg-amber-50 border border-amber-200 rounded-2xl space-y-2 text-center">
+                <ShieldAlert className="w-8 h-8 text-amber-600 mx-auto" />
+                <h4 className="text-sm font-bold text-amber-900">Acceso Restringido para Delegados de COPASST</h4>
+                <p className="text-xs text-amber-800 max-w-lg mx-auto">
+                  Por mandato de la <strong>Resolución 652 de 2012 (Art. 13)</strong>, el COPASST y el COCOLAB son instancias separadas. Las quejas individuales radicadas están protegidas por reserva legal y solo pueden ser consultadas por los miembros acreditados del Comité de Convivencia Laboral o la Dirección SG-SST.
+                </p>
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="mt-2 px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-sm"
+                >
+                  Cambiar a Rol COCOLAB / Admin
+                </button>
+              </div>
+            )}
+
             {/* Miembros de COCOLAB */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-              <h3 className="text-xs font-bold text-white flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-rose-400" />
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+              <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-rose-600" />
                 Miembros Acreditados del COCOLAB ({members.filter(m => m.comite === 'COCOLAB').length})
               </h3>
 
@@ -744,26 +852,26 @@ export default function HomePage() {
                   .map((m) => (
                     <div
                       key={m.id}
-                      className="p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl space-y-2"
+                      className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2"
                     >
                       <div className="flex items-center justify-between">
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
                             m.representacion === 'Empleador'
-                              ? 'bg-rose-500/15 text-rose-400'
-                              : 'bg-emerald-500/15 text-emerald-400'
+                              ? 'bg-rose-100 text-rose-800'
+                              : 'bg-emerald-100 text-emerald-800'
                           }`}
                         >
                           {m.representacion}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-mono">{m.condicion}</span>
+                        <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-white">{m.nombre}</h4>
-                        <p className="text-[11px] text-rose-400 font-medium">{m.rol}</p>
-                        <p className="text-[10px] text-slate-400 truncate">{m.cargo}</p>
+                        <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
+                        <p className="text-[11px] text-rose-700 font-medium">{m.rol}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
                       </div>
-                      <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-700/50">
+                      <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-200">
                         C.C. {m.cedula} • Posesión: {m.fechaPosesion}
                       </div>
                     </div>
@@ -771,63 +879,65 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Quejas Radicadas */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-white flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-rose-400" />
-                  Buzón de Quejas y Casos en Trámite
-                </h3>
-                <span className="text-xs text-slate-400 font-mono">
-                  {quejas.length} casos registrados
-                </span>
-              </div>
-
-              {quejas.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                  No hay quejas radicadas activas en este periodo.
+            {/* Quejas Radicadas (Visible only if permitted) */}
+            {canAccessCocolabPrivates ? (
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                    Buzón de Quejas y Casos en Trámite (Acceso Exclusivo COCOLAB)
+                  </h3>
+                  <span className="text-xs text-slate-500 font-mono">
+                    {quejas.length} casos registrados
+                  </span>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {quejas.map((q) => (
-                    <div
-                      key={q.id}
-                      className="p-4 bg-slate-800/60 border border-slate-700/80 rounded-xl space-y-3"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-rose-400">
-                            {q.radicado}
-                          </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold uppercase">
-                            {q.estado.replace('_', ' ')}
-                          </span>
-                          {q.esPrioritariaLey2365 && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-red-600 text-white font-bold animate-pulse">
-                              Ley 2365/2024
+
+                {quejas.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400 border border-dashed border-slate-200 rounded-xl">
+                    No hay quejas radicadas activas en este periodo.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {quejas.map((q) => (
+                      <div
+                        key={q.id}
+                        className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-rose-700">
+                              {q.radicado}
                             </span>
-                          )}
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold uppercase">
+                              {q.estado.replace('_', ' ')}
+                            </span>
+                            {q.esPrioritariaLey2365 && (
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-red-600 text-white font-bold animate-pulse">
+                                Ley 2365/2024
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-slate-500">Radicado el: {q.fechaRadicacion}</span>
                         </div>
-                        <span className="text-xs text-slate-400">Radicado el: {q.fechaRadicacion}</span>
-                      </div>
 
-                      <div>
-                        <h4 className="text-xs font-bold text-white mb-1">
-                          Tipología: <span className="text-rose-300 font-normal">{q.tipologia}</span>
-                        </h4>
-                        <p className="text-xs text-slate-300 line-clamp-2">{q.hechosNarrados}</p>
-                      </div>
-
-                      {q.acuerdosConvivencia && (
-                        <div className="p-2.5 bg-emerald-950/30 border border-emerald-500/30 rounded-lg text-xs text-emerald-300">
-                          <strong>Acuerdo Concertado:</strong> {q.acuerdosConvivencia}
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-900 mb-1">
+                            Tipología: <span className="text-rose-700 font-medium">{q.tipologia}</span>
+                          </h4>
+                          <p className="text-xs text-slate-600 line-clamp-2">{q.hechosNarrados}</p>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+
+                        {q.acuerdosConvivencia && (
+                          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900">
+                            <strong>Acuerdo Concertado:</strong> {q.acuerdosConvivencia}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -836,18 +946,18 @@ export default function HomePage() {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Camera className="w-5 h-5 text-sky-400" />
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Camera className="w-5 h-5 text-blue-600" />
                   Módulo de Evidencias Fotográficas en Terreno
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Inspección de condiciones y actos inseguros conforme a la Guía Técnica GTC 45
                 </p>
               </div>
 
               <button
                 onClick={() => setIsCameraOpen(true)}
-                className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm"
               >
                 <Camera className="w-4 h-4" />
                 Capturar Foto con Cámara
@@ -867,8 +977,8 @@ export default function HomePage() {
                   onClick={() => setEvidenceFilter(f.id as any)}
                   className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
                     evidenceFilter === f.id
-                      ? 'bg-sky-500 text-slate-950 font-bold'
-                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                      ? 'bg-blue-600 text-white font-bold shadow-sm'
+                      : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
                   {f.label}
@@ -881,12 +991,12 @@ export default function HomePage() {
               {filteredEvidences.map((ev) => (
                 <div
                   key={ev.id}
-                  className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-md flex flex-col"
+                  className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col"
                 >
                   {/* Photo Display */}
                   <div
                     onClick={() => setPreviewImage(ev.imagenAntes)}
-                    className="relative aspect-video bg-black cursor-pointer group overflow-hidden"
+                    className="relative aspect-video bg-slate-900 cursor-pointer group overflow-hidden"
                   >
                     <img
                       src={ev.imagenAntes}
@@ -897,10 +1007,10 @@ export default function HomePage() {
                       <span
                         className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider backdrop-blur-md ${
                           ev.estado === 'subsanado'
-                            ? 'bg-emerald-500/80 text-white'
+                            ? 'bg-emerald-600 text-white'
                             : ev.estado === 'en_proceso'
-                            ? 'bg-amber-500/80 text-slate-950'
-                            : 'bg-red-500/80 text-white'
+                            ? 'bg-amber-500 text-slate-950 font-bold'
+                            : 'bg-red-600 text-white'
                         }`}
                       >
                         {ev.estado}
@@ -911,33 +1021,33 @@ export default function HomePage() {
                   {/* Details */}
                   <div className="p-4 space-y-2.5 flex-1 flex flex-col justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
                         {ev.clasificacion}
                       </span>
-                      <h4 className="text-sm font-bold text-white mt-0.5">{ev.titulo}</h4>
-                      <p className="text-xs text-slate-400 font-medium">{ev.peligroGTC45}</p>
-                      <p className="text-xs text-slate-300 mt-2 line-clamp-2">{ev.descripcion}</p>
+                      <h4 className="text-sm font-bold text-slate-900 mt-0.5">{ev.titulo}</h4>
+                      <p className="text-xs text-slate-500 font-medium">{ev.peligroGTC45}</p>
+                      <p className="text-xs text-slate-600 mt-2 line-clamp-2">{ev.descripcion}</p>
                     </div>
 
-                    <div className="space-y-2 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+                    <div className="space-y-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
                       <div className="flex items-center justify-between">
                         <span>📍 {ev.areaLugar}</span>
                         <span>📅 {ev.fecha} {ev.hora}</span>
                       </div>
-                      <div className="text-slate-300">
+                      <div className="text-slate-700">
                         <strong>Medida:</strong> {ev.medidaCorrectiva}
                       </div>
 
                       {ev.estado !== 'subsanado' ? (
                         <button
                           onClick={() => handleSubsanarEvidencia(ev)}
-                          className="w-full py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors"
+                          className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors"
                         >
                           <Check className="w-3.5 h-3.5" />
                           Marcar como Subsanado
                         </button>
                       ) : (
-                        <div className="text-emerald-400 text-[10px] font-semibold text-center py-1">
+                        <div className="text-emerald-700 text-[10px] font-semibold text-center py-1">
                           ✓ Subsanado el {ev.fechaCierre || ev.fecha}
                         </div>
                       )}
@@ -954,52 +1064,54 @@ export default function HomePage() {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-emerald-400" />
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-emerald-600" />
                   Repositorio de Actas Oficiales Foliadas
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Custodia obligatoria por 20 años conforme al Decreto 1072/2015 (Art. 2.2.4.6.13)
                 </p>
               </div>
 
-              <button
-                onClick={() => {
-                  setSelectedActaForEdit(undefined);
-                  setIsActaModalOpen(true);
-                }}
-                className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow"
-              >
-                <Plus className="w-4 h-4" />
-                Nueva Acta Oficial
-              </button>
+              {session?.rol !== 'COLABORADOR' && (
+                <button
+                  onClick={() => {
+                    setSelectedActaForEdit(undefined);
+                    setIsActaModalOpen(true);
+                  }}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nueva Acta Oficial
+                </button>
+              )}
             </div>
 
             <div className="space-y-3">
               {actas.map((acta) => (
                 <div
                   key={acta.id}
-                  className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+                  className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
                 >
                   <div className="space-y-1.5 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                      <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                         {acta.consecutivo}
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
                         {acta.comite}
                       </span>
-                      <span className="text-[10px] text-emerald-400 font-semibold">
+                      <span className="text-[10px] text-emerald-700 font-semibold">
                         ✓ {acta.estado.toUpperCase()}
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-bold text-white">{acta.titulo}</h3>
-                    <p className="text-xs text-slate-400">
+                    <h3 className="text-sm font-bold text-slate-900">{acta.titulo}</h3>
+                    <p className="text-xs text-slate-500">
                       Fecha: {acta.fecha} ({acta.horaInicio} - {acta.horaFin}) • {acta.lugar}
                     </p>
 
-                    <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
+                    <div className="flex items-center gap-4 text-xs text-slate-500 pt-1">
                       <span>👥 {acta.asistentes.filter(a => a.asistio).length} Asistentes</span>
                       <span>📋 {acta.compromisos.length} Tareas Asignadas</span>
                       <span>📷 {acta.evidenciasIds?.length || 0} Fotos Anexadas</span>
@@ -1007,18 +1119,20 @@ export default function HomePage() {
                   </div>
 
                   <div className="flex items-center gap-2 self-end sm:self-center">
-                    <button
-                      onClick={() => {
-                        setSelectedActaForEdit(acta);
-                        setIsActaModalOpen(true);
-                      }}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 transition-colors"
-                    >
-                      Editar
-                    </button>
+                    {session?.rol !== 'COLABORADOR' && (
+                      <button
+                        onClick={() => {
+                          setSelectedActaForEdit(acta);
+                          setIsActaModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-colors shadow-sm"
+                      >
+                        Editar
+                      </button>
+                    )}
                     <button
                       onClick={() => exportarActaPDF(acta, company, evidences)}
-                      className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow transition-all"
+                      className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-all"
                     >
                       <Download className="w-3.5 h-3.5" />
                       Descargar PDF Foliado
@@ -1035,18 +1149,18 @@ export default function HomePage() {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Vote className="w-5 h-5 text-emerald-400" />
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Vote className="w-5 h-5 text-emerald-600" />
                   Módulo de Elecciones Electrónicas y Votaciones
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Proceso democrático y secreto para elegir los representantes de los trabajadores
                 </p>
               </div>
 
               <button
                 onClick={() => setIsElectionModalOpen(true)}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm"
               >
                 <Vote className="w-4 h-4" />
                 Abrir Urna Virtual / Votar
@@ -1054,22 +1168,24 @@ export default function HomePage() {
             </div>
 
             {/* Estado del proceso */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-white">
+                  <h3 className="text-sm font-bold text-slate-900">
                     Elección de {eleccion.comite} • Periodo {eleccion.periodo}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500">
                     Total votos escrutados: {eleccion.totalVotosEmitidos} ({eleccion.votosEnBlanco} en blanco)
                   </p>
                 </div>
-                <button
-                  onClick={() => handleGenerarActaPosesion(eleccion)}
-                  className="px-3.5 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-lg shadow"
-                >
-                  Generar Acta de Posesión
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => handleGenerarActaPosesion(eleccion)}
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-sm"
+                  >
+                    Generar Acta de Posesión
+                  </button>
+                )}
               </div>
 
               {/* Candidatos Cards */}
@@ -1077,20 +1193,20 @@ export default function HomePage() {
                 {eleccion.candidatos.map((c) => (
                   <div
                     key={c.id}
-                    className="p-4 bg-slate-800/60 border border-slate-700/80 rounded-xl flex items-center justify-between gap-3"
+                    className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center font-bold text-sky-400">
+                      <div className="w-10 h-10 rounded-full bg-white border border-slate-300 flex items-center justify-center font-bold text-blue-700 shadow-sm">
                         #{c.numeroTarjeton}
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-white">{c.nombre}</h4>
-                        <p className="text-[11px] text-slate-400">{c.cargo} • {c.area}</p>
+                        <h4 className="text-xs font-bold text-slate-900">{c.nombre}</h4>
+                        <p className="text-[11px] text-slate-500">{c.cargo} • {c.area}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-base font-bold text-emerald-400">{c.votos}</span>
-                      <span className="text-[10px] text-slate-500 block">votos</span>
+                      <span className="text-base font-bold text-emerald-700">{c.votos}</span>
+                      <span className="text-[10px] text-slate-400 block">votos</span>
                     </div>
                   </div>
                 ))}
@@ -1108,11 +1224,24 @@ export default function HomePage() {
       />
 
       {/* Modals */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLogin={handleLogin}
+        currentSession={session}
+      />
+
+      <ManualModal
+        isOpen={isManualModalOpen}
+        onClose={() => setIsManualModalOpen(false)}
+      />
+
       <CameraCaptureModal
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onSave={handleSaveEvidence}
         sedeDefault={company.sedePrincipal}
+        authorName={session?.nombre}
       />
 
       <ActaEditorModal
@@ -1129,6 +1258,7 @@ export default function HomePage() {
         isOpen={isQuejaModalOpen}
         onClose={() => setIsQuejaModalOpen(false)}
         onSave={handleSaveQueja}
+        authorDefault={session ? { nombre: session.nombre, email: session.email, cargo: session.cargo } : undefined}
       />
 
       <ElectionModal
@@ -1137,6 +1267,7 @@ export default function HomePage() {
         eleccion={eleccion}
         onVote={handleVote}
         onGenerarActaPosesion={handleGenerarActaPosesion}
+        canManage={isAdmin}
       />
 
       <CompanyModal
@@ -1149,13 +1280,20 @@ export default function HomePage() {
         }}
       />
 
+      <UserManagementModal
+        isOpen={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        currentUser={session}
+        onSwitchUser={handleLogin}
+      />
+
       {/* Preview Full Image Modal */}
       {previewImage && (
         <div
           onClick={() => setPreviewImage(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md cursor-pointer"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm cursor-pointer"
         >
-          <div className="relative max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+          <div className="relative max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-2xl">
             <img src={previewImage} alt="Evidencia ampliada" className="w-full h-full object-contain" />
           </div>
         </div>

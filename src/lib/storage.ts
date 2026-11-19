@@ -1,6 +1,83 @@
 'use client';
 
-import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion } from '@/types';
+import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion, UserAccount, UserSession } from '@/types';
+
+export const DEMO_USERS: UserAccount[] = [
+  {
+    id: 'u-wendy',
+    nombre: 'Wendy (Recursos Humanos)',
+    email: 'wendy@empresa.co',
+    password: '123',
+    cedula: '1.028.456.789',
+    cargo: 'Encargada de Recursos Humanos',
+    area: 'Gestión Humana y Talento',
+    rol: 'SUPER_ADMIN_RRHH',
+    accesoCopasst: true,
+    accesoCocolab: true,
+    cargoEnComite: 'Validadora COPASST & COCOLAB',
+    activo: true,
+    createdAt: '2026-01-10T08:00:00Z',
+  },
+  {
+    id: 'u-admin',
+    nombre: 'Ing. Carlos Andrés Mendoza',
+    email: 'admin@empresa.co',
+    password: '123',
+    cedula: '19.458.120',
+    cargo: 'Gerente General & SG-SST',
+    area: 'Alta Dirección',
+    rol: 'ADMIN_SST',
+    accesoCopasst: true,
+    accesoCocolab: true,
+    cargoEnComite: 'Representante Legal',
+    activo: true,
+    createdAt: '2026-01-10T08:00:00Z',
+  },
+  {
+    id: 'u-copasst',
+    nombre: 'Ing. Laura Marcela Gómez Pardo',
+    email: 'copasst@empresa.co',
+    password: '123',
+    cedula: '1.018.452.331',
+    cargo: 'Coordinadora SST',
+    area: 'Seguridad y Salud',
+    rol: 'COPASST',
+    accesoCopasst: true,
+    accesoCocolab: false,
+    cargoEnComite: 'Presidente COPASST',
+    activo: true,
+    createdAt: '2026-01-15T09:00:00Z',
+  },
+  {
+    id: 'u-cocolab',
+    nombre: 'Felipe Andrés Salamanca Ruiz',
+    email: 'cocolab@empresa.co',
+    password: '123',
+    cedula: '1.022.341.552',
+    cargo: 'Director de Convivencia y Clima Laboral',
+    area: 'Gestión Humana',
+    rol: 'COCOLAB',
+    accesoCopasst: false,
+    accesoCocolab: true,
+    cargoEnComite: 'Presidente COCOLAB',
+    activo: true,
+    createdAt: '2026-01-15T09:00:00Z',
+  },
+  {
+    id: 'u-colaborador',
+    nombre: 'Andrés Felipe Torres',
+    email: 'colaborador@empresa.co',
+    password: '123',
+    cedula: '1.014.558.990',
+    cargo: 'Operador de Bodega y Logística',
+    area: 'Operaciones',
+    rol: 'COLABORADOR',
+    accesoCopasst: false,
+    accesoCocolab: false,
+    activo: true,
+    createdAt: '2026-02-01T10:00:00Z',
+  },
+];
 
 const INITIAL_COMPANY: CompanyProfile = {
   razonSocial: 'Logística & Soluciones Industriales Andina S.A.S.',
@@ -606,6 +683,52 @@ export const storage = {
     if (typeof window !== 'undefined') {
       localStorage.setItem(KEYS.ELECCIONES, JSON.stringify(data));
       window.dispatchEvent(new Event('cocopasst_data_changed'));
+    }
+  },
+
+  getUsers: (): UserAccount[] => {
+    if (typeof window === 'undefined') return DEMO_USERS;
+    const val = localStorage.getItem('cocopasst_users');
+    return val ? JSON.parse(val) : DEMO_USERS;
+  },
+  saveUsers: (data: UserAccount[]) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cocopasst_users', JSON.stringify(data));
+      window.dispatchEvent(new Event('cocopasst_users_changed'));
+    }
+  },
+  addUser: (user: UserAccount) => {
+    const list = storage.getUsers();
+    const updated = [user, ...list];
+    storage.saveUsers(updated);
+    return updated;
+  },
+  updateUser: (id: string, updates: Partial<UserAccount>) => {
+    const list = storage.getUsers();
+    const updated = list.map(u => u.id === id ? { ...u, ...updates } : u);
+    storage.saveUsers(updated);
+    return updated;
+  },
+  deleteUser: (id: string) => {
+    const list = storage.getUsers();
+    const updated = list.filter(u => u.id !== id);
+    storage.saveUsers(updated);
+    return updated;
+  },
+
+  getSession: (): UserSession | null => {
+    if (typeof window === 'undefined') return DEMO_USERS[0];
+    const val = localStorage.getItem('cocopasst_session');
+    return val ? JSON.parse(val) : DEMO_USERS[0];
+  },
+  setSession: (user: UserSession | null) => {
+    if (typeof window !== 'undefined') {
+      if (user) {
+        localStorage.setItem('cocopasst_session', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('cocopasst_session');
+      }
+      window.dispatchEvent(new Event('cocopasst_session_changed'));
     }
   },
 };
