@@ -22,7 +22,8 @@ import {
   Vote,
   Settings,
   PlusCircle,
-  ExternalLink
+  ExternalLink,
+  UserCheck
 } from 'lucide-react';
 import { CompanyProfile, UserSession } from '@/types';
 
@@ -36,6 +37,7 @@ interface Props {
   onOpenCompany: () => void;
   onOpenManual: () => void;
   onOpenProgram: () => void;
+  onOpenAssignMember?: () => void;
   onLogout: () => void;
   activeSection: string;
   setActiveSection: (s: string) => void;
@@ -51,6 +53,7 @@ export default function Navbar({
   onOpenCompany,
   onOpenManual,
   onOpenProgram,
+  onOpenAssignMember,
   onLogout,
   activeSection,
   setActiveSection,
@@ -289,6 +292,29 @@ export default function Navbar({
                       </button>
                     )}
 
+                    {/* Asignar Miembros a Comités */}
+                    {canManageUsers && onOpenAssignMember && (
+                      <button
+                        onClick={() => {
+                          setIsToolsOpen(false);
+                          onOpenAssignMember();
+                        }}
+                        className="w-full flex items-start gap-2.5 px-3 py-2 text-left rounded-xl hover:bg-emerald-50/80 transition-colors group"
+                      >
+                        <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                          <UserCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-slate-800 group-hover:text-emerald-900">
+                            Asignar Miembros Comités
+                          </div>
+                          <div className="text-[11px] text-slate-500 leading-tight">
+                            Tú eliges los miembros y cargos en COPASST y COCOLAB
+                          </div>
+                        </div>
+                      </button>
+                    )}
+
                     {/* Nueva Acta */}
                     {session?.rol !== 'COLABORADOR' && (
                       <button
@@ -490,6 +516,22 @@ export default function Navbar({
                     <div>
                       <div className="text-xs font-bold text-purple-900">Censo Empleados</div>
                       <div className="text-[10px] text-purple-600">24 nómina real</div>
+                    </div>
+                  </button>
+                )}
+
+                {canManageUsers && onOpenAssignMember && (
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onOpenAssignMember();
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-left transition-colors"
+                  >
+                    <UserCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <div>
+                      <div className="text-xs font-bold text-emerald-900">Asignar Comités</div>
+                      <div className="text-[10px] text-emerald-600">Roles y cargos</div>
                     </div>
                   </button>
                 )}

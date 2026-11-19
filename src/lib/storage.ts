@@ -529,119 +529,12 @@ const INITIAL_COMPANY: CompanyProfile = {
   representanteLegal: 'Diego Alejandro Zúñiga Plazas',
   responsableSST: 'Diego Alejandro Zúñiga Plazas & Wendy Vanesa Angulo',
   licenciaSST: 'Resolución SDS-34821 de 2021',
-  vigenciaComitesDesde: '2026-01-15',
-  vigenciaComitesHasta: '2028-01-14',
+  vigenciaComitesDesde: '2026-06-25',
+  vigenciaComitesHasta: '2028-06-24',
   logoUrl: '',
 };
 
-export const INITIAL_MEMBERS: Member[] = [
-  // COPASST
-  {
-    id: 'm1',
-    nombre: 'OSORIO CHICO JAIDER LINCOLN',
-    cedula: '1143342664',
-    cargo: 'Gerente de Operaciones y Planta',
-    comite: 'COPASST',
-    representacion: 'Trabajadores',
-    rol: 'Presidente',
-    condicion: 'Principal',
-    telefono: '3104589901',
-    email: 'gerencia@sysnet.com.co',
-    fechaPosesion: '2026-01-15',
-  },
-  {
-    id: 'm2',
-    nombre: 'MARIMON SIMARRA CAROLINA',
-    cedula: '1001833348',
-    cargo: 'Coordinadora de Facturación y Compras',
-    comite: 'COPASST',
-    representacion: 'Empleador',
-    rol: 'Secretario',
-    condicion: 'Principal',
-    telefono: '3042239906',
-    email: 'cmarimon.sysnet@gmail.com',
-    fechaPosesion: '2026-01-15',
-  },
-  {
-    id: 'm3',
-    nombre: 'PEÑA NAVARRO SAMUEL ANTONIO',
-    cedula: '8641302',
-    cargo: 'Técnico de Mantenimiento y Alturas',
-    comite: 'COPASST',
-    representacion: 'Trabajadores',
-    rol: 'Vocal / Miembro',
-    condicion: 'Suplente',
-    telefono: '3178892208',
-    email: 'spena@sysnet.com.co',
-    fechaPosesion: '2026-01-15',
-  },
-  {
-    id: 'm4',
-    nombre: 'ACOSTA BARROS EDDIE JHOHANER',
-    cedula: '84083810',
-    cargo: 'Técnico de Soporte e Infraestructura',
-    comite: 'COPASST',
-    representacion: 'Empleador',
-    rol: 'Vocal / Miembro',
-    condicion: 'Suplente',
-    telefono: '3104589901',
-    email: 'soporte10@sysnet.com.co',
-    fechaPosesion: '2026-01-15',
-  },
-  // COCOLAB
-  {
-    id: 'm5',
-    nombre: 'MERLANO FLOREZ TOMAS ENRIQUE',
-    cedula: '9284360',
-    cargo: 'Coordinador Comercial y Logística',
-    comite: 'COCOLAB',
-    representacion: 'Empleador',
-    rol: 'Presidente',
-    condicion: 'Principal',
-    telefono: '3128894402',
-    email: 'tmerlano@hotmail.com',
-    fechaPosesion: '2026-01-15',
-  },
-  {
-    id: 'm6',
-    nombre: 'RIVERO LEIVA CESAR ANTONIO',
-    cedula: '16831081',
-    cargo: 'Coordinador Técnico de Infraestructura',
-    comite: 'COCOLAB',
-    representacion: 'Trabajadores',
-    rol: 'Secretario',
-    condicion: 'Principal',
-    telefono: '3015548805',
-    email: 'crivero@sysnet.com.co',
-    fechaPosesion: '2026-01-15',
-  },
-  {
-    id: 'm7',
-    nombre: 'ANGULO WENDY VANESA',
-    cedula: '1143415065',
-    cargo: 'Encargada de Recursos Humanos',
-    comite: 'COCOLAB',
-    representacion: 'Empleador',
-    rol: 'Vocal / Miembro',
-    condicion: 'Suplente',
-    telefono: '3104589921',
-    email: 'rrhhsysnet@gmail.com',
-    fechaPosesion: '2026-01-15',
-  },
-  {
-    id: 'm8',
-    nombre: 'BETANCOURT ALVAREZ CLAUDIA ROXANA',
-    cedula: '1042422007',
-    cargo: 'Contadora General y Facturación',
-    comite: 'COCOLAB',
-    representacion: 'Trabajadores',
-    rol: 'Vocal / Miembro',
-    condicion: 'Suplente',
-    telefono: '3114456615',
-    email: 'soporte16@sysnet.com.co',
-    fechaPosesion: '2026-01-15',
-  },
-];
+export const INITIAL_MEMBERS: Member[] = [];
 
 // Helper to generate sample image SVG data URI
 function generateSampleSvg(label: string, color: string, iconType: 'hazard' | 'check' | 'camera') {
@@ -709,219 +602,113 @@ const INITIAL_EVIDENCES: Evidence[] = [
 const INITIAL_ACTAS: Acta[] = [
   {
     id: 'acta-cop-01',
-    consecutivo: 'ACTA-COP-2026-011',
+    consecutivo: 'ACTA-COP-2026-001',
     tipo: 'ordinaria_copasst',
     comite: 'COPASST',
-    titulo: 'Reunión Ordinaria Mensual de COPASST - Noviembre 2026',
-    fecha: '2026-11-15',
-    horaInicio: '08:30 AM',
-    horaFin: '10:30 AM',
-    lugar: 'Sala de Juntas Principal & Enlace Virtual Teams',
-    asistentes: [
-      {
-        nombre: 'Ing. Laura Marcela Gómez Pardo',
-        cedula: '1.018.452.331',
-        cargo: 'Coordinadora SST',
-        rolEnComite: 'Presidente',
-        representacion: 'Empleador',
-        asistio: true,
-      },
-      {
-        nombre: 'Ricardo Antonio Beltrán Peña',
-        cedula: '79.845.120',
-        cargo: 'Jefe Mantenimiento',
-        rolEnComite: 'Vocal / Miembro',
-        representacion: 'Empleador',
-        asistio: true,
-      },
-      {
-        nombre: 'Diana Milena Rincón Castro',
-        cedula: '52.981.440',
-        cargo: 'Supervisora Bodega',
-        rolEnComite: 'Secretario',
-        representacion: 'Trabajadores',
-        asistio: true,
-      },
-      {
-        nombre: 'Javier Orlando Pinzón Silva',
-        cedula: '80.231.995',
-        cargo: 'Operador Montacargas',
-        rolEnComite: 'Vocal / Miembro',
-        representacion: 'Trabajadores',
-        asistio: true,
-      },
-    ],
+    titulo: 'Acta #01: Primera Reunión Oficial Ordinaria del COPASST',
+    fecha: '2026-11-18',
+    horaInicio: '09:00 AM',
+    horaFin: '11:00 AM',
+    lugar: 'Sede Principal SYSNET - Sala de Juntas',
+    asistentes: [],
     ordenDelDia: [
-      '1. Verificación del quórum reglamentario y lectura del orden del día.',
-      '2. Revisión de compromisos del acta anterior (ACTA-COP-2026-010).',
-      '3. Análisis estadístico de accidentalidad e incidentes del mes de octubre.',
-      '4. Resultados de la inspección de seguridad en Bodega 2 y taller (revisión de evidencias fotográficas).',
-      '5. Seguimiento a recomendaciones de la ARL SURA.',
-      '6. Asignación de nuevos compromisos y cierre.',
+      '1. Verificación del quórum reglamentario de instalación.',
+      '2. Instalación formal del COPASST periodo 2026-2028 (Elecciones 20-junio, resultados 25-junio).',
+      '3. Asignación y ratificación de roles (Presidente designado por Empleador, Secretario por el Comité).',
+      '4. Definición del horario de trabajo del comité (4 horas semanales reglamentarias Dec. Ley 1295/94).',
+      '5. Revisión y aprobación del Cronograma Anual de Seguridad y Salud en el Trabajo 2026-2027.',
+      '6. Definición de compromisos iniciales y fecha de la siguiente reunión ordinaria.',
     ],
     desarrolloPuntos: [
       {
         punto: '1. Verificación del Quórum',
-        desarrollo: 'Se verifica la asistencia del 100% de los miembros principales del COPASST por ambas partes. Se declara quórum legal deliberatorio y decisorio según Res. 2013/1986.',
+        desarrollo: 'Se verifica la asistencia de los miembros principales del COPASST elegidos y designados. Se declara quórum legal deliberatorio y decisorio según Res. 2013/1986.',
       },
       {
-        punto: '2. Revisión de Compromisos Anteriores',
-        desarrollo: 'Se cumplió la recarga de los 14 extintores de CO2 del área administrativa. Queda pendiente la calibración de sonómetros para el estudio higiénico de ruido en bodega.',
+        punto: '2. Instalación Formal del Comité',
+        desarrollo: 'Siendo el 18 de noviembre de 2026, se declara formalmente instalado el Comité Paritario de Seguridad y Salud en el Trabajo (COPASST) de SYSNET para el periodo estatutario 2026-2028, como culminación del proceso electoral de votaciones del 20 de junio y escrutinio del 25 de junio de 2026.',
       },
       {
-        punto: '3. Estadística de Accidentalidad',
-        desarrollo: 'Durante octubre se presentaron cero (0) accidentes de trabajo con tiempo perdido y dos (2) incidentes leves (atrapamiento menor de guante y tropiezo sin lesión). Se mantiene índice de severidad en cero.',
+        punto: '3. Ratificación de Roles y Funciones',
+        desarrollo: 'Se ratifican los cargos del comité: Presidente en representación de la empresa, Secretario en representación de los trabajadores y Vocales, comprometiéndose a velar por la prevención de riesgos laborales.',
       },
       {
-        punto: '4. Inspección de Seguridad y Evidencias',
-        desarrollo: 'Se proyectan en pantalla las fotografías registradas en el sistema: 1) Obstrucción de extintor en bodega (subsanada exitosamente al día siguiente) y 2) Cableado expuesto en estación de baterías. Se decide priorizar su aislamiento eléctrico esta semana.',
+        punto: '4. Tiempo Laboral Remunerado',
+        desarrollo: 'Se recuerda que la empresa SYSNET garantiza por mandato legal un mínimo de cuatro (4) horas semanales dentro de la jornada laboral ordinaria para el cumplimiento de las funciones del comité.',
       },
       {
-        punto: '5. Recomendaciones ARL SURA',
-        desarrollo: 'La ARL programó capacitación virtual sobre "Manipulación Segura de Cargas y Pausas Activas" para el 25 de noviembre.',
+        punto: '5. Plan y Cronograma de Trabajo',
+        desarrollo: 'Se aprueba la matriz preliminar de inspecciones mensuales de seguridad locativa, orden y aseo, botiquines, extintores y señalización en sedes operativas.',
       },
     ],
     compromisos: [
       {
         id: 'c1',
-        descripcion: 'Canalizar en tubería conduit metálica y reemplazar cableado de estación de baterías de montacargas.',
-        responsable: 'Ricardo Beltrán (Mantenimiento)',
-        fechaLimite: '2026-11-21',
-        estado: 'en_proceso',
-      },
-      {
-        id: 'c2',
-        descripcion: 'Coordinar con ARL la asistencia de las cuadrillas de bodega a la capacitación ergonómica del 25-nov.',
-        responsable: 'Diana Rincón (Secretaria)',
-        fechaLimite: '2026-11-24',
-        estado: 'pendiente',
-      },
-      {
-        id: 'c3',
-        descripcion: 'Realizar inspección preoperacional de transpaletas manuales y marcar equipos fuera de servicio.',
-        responsable: 'Javier Pinzón',
-        fechaLimite: '2026-11-28',
-        estado: 'pendiente',
-      },
-    ],
-    evidenciasIds: ['ev-01', 'ev-02'],
-    firmasDigitales: [
-      {
-        nombre: 'Ing. Laura Marcela Gómez Pardo',
-        cargo: 'Coordinadora SST',
-        rol: 'Presidente COPASST',
-        fechaFirma: '2026-11-15 10:45 AM',
-      },
-      {
-        nombre: 'Diana Milena Rincón Castro',
-        cargo: 'Supervisora Bodega',
-        rol: 'Secretaria COPASST',
-        fechaFirma: '2026-11-15 10:46 AM',
-      },
-    ],
-    estado: 'aprobada',
-    creadoPor: 'Diana Milena Rincón Castro',
-    createdAt: '2026-11-15T10:50:00Z',
-  },
-  {
-    id: 'acta-col-01',
-    consecutivo: 'ACTA-COL-2026-003',
-    tipo: 'ordinaria_cocolab',
-    comite: 'COCOLAB',
-    titulo: 'Reunión Ordinaria Trimestral de COCOLAB - Q3 2026',
-    fecha: '2026-10-18',
-    horaInicio: '02:00 PM',
-    horaFin: '03:45 PM',
-    lugar: 'Sala de Bienestar & Teleconferencia Privada',
-    asistentes: [
-      {
-        nombre: 'Felipe Andrés Salamanca Ruiz',
-        cedula: '1.022.341.552',
-        cargo: 'Director Gestión Humana',
-        rolEnComite: 'Presidente',
-        representacion: 'Empleador',
-        asistio: true,
-      },
-      {
-        nombre: 'Claudia Patricia Hoyos Meza',
-        cedula: '53.112.879',
-        cargo: 'Coordinadora Nómina',
-        rolEnComite: 'Vocal / Miembro',
-        representacion: 'Empleador',
-        asistio: true,
-      },
-      {
-        nombre: 'Esteban Morales Cárdenas',
-        cedula: '1.030.551.487',
-        cargo: 'Líder Despachos',
-        rolEnComite: 'Secretario',
-        representacion: 'Trabajadores',
-        asistio: true,
-      },
-      {
-        nombre: 'Nathalia Sofía Vargas Peña',
-        cedula: '1.014.223.901',
-        cargo: 'Auxiliar Contable',
-        rolEnComite: 'Vocal / Miembro',
-        representacion: 'Trabajadores',
-        asistio: true,
-      },
-    ],
-    ordenDelDia: [
-      '1. Verificación de quórum y reiteración del deber estricto de confidencialidad (Res. 652/2012).',
-      '2. Balance trimestral de radicación y trámite de quejas en el sistema.',
-      '3. Socialización del protocolo institucional de prevención de Acoso Sexual Laboral bajo la Ley 2365 de 2024.',
-      '4. Plan de talleres de comunicación asertiva y resolución pacífica de conflictos.',
-      '5. Conclusiones y cierre.',
-    ],
-    desarrolloPuntos: [
-      {
-        punto: '1. Quórum y Deber de Confidencialidad',
-        desarrollo: 'Presentes todos los miembros. El Presidente recuerda el deber de reserva legal que cobija a las actuaciones y deliberaciones del comité.',
-      },
-      {
-        punto: '2. Balance de Quejas',
-        desarrollo: 'Durante el último trimestre se radicó un (1) caso tipificado como presunto trato interpersonal descortés / desentendimiento operativo. Tras la sesión de escucha y concertación bilateral, las partes firmaron acta de acuerdo amistoso con resultado satisfactorio y sin reincidencia.',
-      },
-      {
-        punto: '3. Adopción Ley 2365 de 2024',
-        desarrollo: 'Se aprueba remitir a Gerencia General la política actualizada de Cero Tolerancia al Acoso Sexual y Violencias Basadas en Género, junto con el flujograma de atención inmediata y canales anónimos de orientación.',
-      },
-    ],
-    compromisos: [
-      {
-        id: 'col-c1',
-        descripcion: 'Desplegar campaña digital por correo y cartelera física sobre la Ley 2365/2024 y canales de atención de COCOLAB.',
-        responsable: 'Felipe Salamanca / Claudia Hoyos',
+        descripcion: 'Realizar la primera inspección locativa y de extintores en las instalaciones operativas.',
+        responsable: 'Comité en pleno',
         fechaLimite: '2026-11-30',
         estado: 'en_proceso',
       },
       {
-        id: 'col-c2',
-        descripcion: 'Agendar taller lúdico presencial de inteligencia emocional con el apoyo de la caja de compensación Compensar.',
-        responsable: 'Esteban Morales',
-        fechaLimite: '2026-12-10',
+        id: 'c2',
+        descripcion: 'Socializar a todos los colaboradores de SYSNET la conformación oficial del COPASST.',
+        responsable: 'Secretario COPASST',
+        fechaLimite: '2026-11-25',
         estado: 'pendiente',
       },
     ],
-    evidenciasIds: [],
-    firmasDigitales: [
+    evidenciasIds: ['ev-01', 'ev-02'],
+    firmasDigitales: [],
+    estado: 'aprobada',
+    creadoPor: 'Secretario COPASST SYSNET',
+    createdAt: '2026-11-18T11:00:00Z',
+  },
+  {
+    id: 'acta-col-01',
+    consecutivo: 'ACTA-COL-2026-001',
+    tipo: 'ordinaria_cocolab',
+    comite: 'COCOLAB',
+    titulo: 'Acta #01: Primera Reunión Oficial Ordinaria de COCOLAB',
+    fecha: '2026-11-18',
+    horaInicio: '02:00 PM',
+    horaFin: '03:30 PM',
+    lugar: 'Sede Principal SYSNET - Sala de Juntas',
+    asistentes: [],
+    ordenDelDia: [
+      '1. Verificación del quórum reglamentario y llamado a lista.',
+      '2. Instalación formal del Comité de Convivencia Laboral (COCOLAB) periodo 2026-2028.',
+      '3. Firma de acuerdo de estricta confidencialidad y reserva legal (Ley 1010/2006 y Ley 2365/2024).',
+      '4. Establecimiento del canal confidencial para radicación de quejas.',
+      '5. Aprobación del plan trimestral de prevención de acoso laboral y fomento del clima organizacional.',
+    ],
+    desarrolloPuntos: [
       {
-        nombre: 'Felipe Andrés Salamanca Ruiz',
-        cargo: 'Director Gestión Humana',
-        rol: 'Presidente COCOLAB',
-        fechaFirma: '2026-10-18 03:50 PM',
+        punto: '1. Verificación del Quórum',
+        desarrollo: 'Se constata la asistencia de los delegados principales del empleador y de los trabajadores. Se declara legalmente constituida la sesión.',
       },
       {
-        nombre: 'Esteban Morales Cárdenas',
-        cargo: 'Líder Despachos',
-        rol: 'Secretario COCOLAB',
-        fechaFirma: '2026-10-18 03:52 PM',
+        punto: '2. Instalación del Comité',
+        desarrollo: 'Queda instalado el COCOLAB de SYSNET para el periodo 2026-2028 conforme a la Resolución 652 de 2012 y 1356 de 2012 del Ministerio del Trabajo.',
+      },
+      {
+        punto: '3. Compromiso de Confidencialidad',
+        desarrollo: 'Todos los integrantes suscriben el compromiso de guardar absoluta reserva legal sobre los hechos, quejas y audiencias conciliatorias que conozcan.',
       },
     ],
+    compromisos: [
+      {
+        id: 'cc1',
+        descripcion: 'Habilitar y divulgar el canal confidencial de recepción de quejas en SYSNET.',
+        responsable: 'Comité de Convivencia Laboral',
+        fechaLimite: '2026-11-30',
+        estado: 'en_proceso',
+      },
+    ],
+    evidenciasIds: [],
+    firmasDigitales: [],
     estado: 'aprobada',
-    creadoPor: 'Esteban Morales Cárdenas',
-    createdAt: '2026-10-18T16:00:00Z',
+    creadoPor: 'Secretario COCOLAB SYSNET',
+    createdAt: '2026-11-18T15:30:00Z',
   },
 ];
 
@@ -959,59 +746,25 @@ const INITIAL_ELECCION: ProcesoEleccion = {
   id: 'elec-2026-01',
   periodo: '2026-2028',
   comite: 'COPASST',
-  fechaConvocatoria: '2025-12-01',
-  fechaVotacionInicio: '2026-01-10',
-  fechaVotacionFin: '2026-01-12',
+  fechaConvocatoria: '2026-06-01',
+  fechaVotacionInicio: '2026-06-20',
+  fechaVotacionFin: '2026-06-20',
   estado: 'cerrada_escrutinio',
-  candidatos: [
-    {
-      id: 'c-1',
-      nombre: 'Diana Milena Rincón Castro',
-      cedula: '52.981.440',
-      cargo: 'Supervisora de Operaciones Bodega',
-      area: 'Operaciones',
-      comite: 'COPASST',
-      numeroTarjeton: 1,
-      votos: 28,
-    },
-    {
-      id: 'c-2',
-      nombre: 'Javier Orlando Pinzón Silva',
-      cedula: '80.231.995',
-      cargo: 'Operador de Montacargas',
-      area: 'Logística',
-      comite: 'COPASST',
-      numeroTarjeton: 2,
-      votos: 16,
-    },
-  ],
-  designadosEmpleador: [
-    {
-      nombre: 'Ing. Laura Marcela Gómez Pardo',
-      cedula: '1.018.452.331',
-      cargo: 'Coordinadora SST',
-      condicion: 'Principal',
-    },
-    {
-      nombre: 'Ricardo Antonio Beltrán Peña',
-      cedula: '79.845.120',
-      cargo: 'Jefe de Mantenimiento',
-      condicion: 'Suplente',
-    },
-  ],
-  totalVotosEmitidos: 46,
-  votosEnBlanco: 2,
-  jurados: ['Andrea Carolina Torres (Nómina)', 'Santiago Ospina (Sistemas)'],
+  candidatos: [],
+  designadosEmpleador: [],
+  totalVotosEmitidos: 24,
+  votosEnBlanco: 0,
+  jurados: ['Comité Electoral SYSNET'],
 };
 
 // Storage keys
 const KEYS = {
   COMPANY: 'cocopasst_company_profile',
-  MEMBERS: 'cocopasst_members',
+  MEMBERS: 'cocopasst_members_sysnet_user_v1',
   EVIDENCES: 'cocopasst_evidences',
-  ACTAS: 'cocopasst_actas',
+  ACTAS: 'cocopasst_actas_sysnet_v1',
   QUEJAS: 'cocopasst_quejas',
-  ELECCIONES: 'cocopasst_elecciones',
+  ELECCIONES: 'cocopasst_elecciones_sysnet_v1',
 };
 
 export const formatRiesgos = (company: CompanyProfile): string => {
@@ -1064,21 +817,16 @@ export const storage = {
   },
 
   getMembers: (): Member[] => {
-    if (typeof window === 'undefined') return INITIAL_MEMBERS;
+    if (typeof window === 'undefined') return [];
     const val = localStorage.getItem(KEYS.MEMBERS);
     if (!val) {
-      localStorage.setItem(KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
-      return INITIAL_MEMBERS;
+      localStorage.setItem(KEYS.MEMBERS, JSON.stringify([]));
+      return [];
     }
     try {
-      const parsed = JSON.parse(val);
-      if (!parsed.some((m: Member) => m.email?.includes('sysnet') || m.nombre.includes('OSORIO CHICO JAIDER LINCOLN'))) {
-        localStorage.setItem(KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
-        return INITIAL_MEMBERS;
-      }
-      return parsed;
+      return JSON.parse(val);
     } catch {
-      return INITIAL_MEMBERS;
+      return [];
     }
   },
   saveMembers: (data: Member[]) => {

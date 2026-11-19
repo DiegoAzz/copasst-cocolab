@@ -27,6 +27,9 @@ import {
   BookOpen,
   LogIn,
   User,
+  Edit2,
+  Trash2,
+  Users,
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
@@ -39,6 +42,7 @@ import ManualModal from '@/components/ManualModal';
 import LoginModal from '@/components/LoginModal';
 import UserManagementModal from '@/components/UserManagementModal';
 import CommitteeProgramModal from '@/components/CommitteeProgramModal';
+import CommitteeMemberModal from '@/components/CommitteeMemberModal';
 import { storage, formatRiesgos } from '@/lib/storage';
 import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion, UserSession, CronogramaItem } from '@/types';
 import { calcularEstructuraCopasst, calcularEstructuraCocolab, PERIODICIDAD_LEGAL } from '@/lib/colombianLaw';
@@ -73,6 +77,19 @@ export default function HomePage() {
   const [isProgramModalOpen, setIsProgramModalOpen] = useState(false);
   const [programInitialTab, setProgramInitialTab] = useState<'cronograma' | 'funciones' | 'tiempos'>('cronograma');
   const [programInitialComite, setProgramInitialComite] = useState<'TODOS' | 'COPASST' | 'COCOLAB'>('TODOS');
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [selectedMemberComite, setSelectedMemberComite] = useState<'COPASST' | 'COCOLAB'>('COPASST');
+  const [memberToEdit, setMemberToEdit] = useState<Member | null>(null);
+
+  const handleOpenAssignMember = (comite: 'COPASST' | 'COCOLAB', member?: Member) => {
+    setSelectedMemberComite(comite);
+    setMemberToEdit(member || null);
+    setIsMemberModalOpen(true);
+  };
+
+  const handleMemberSaved = () => {
+    setMembers(storage.getMembers());
+  };
 
   // Evidence Filter
   const [evidenceFilter, setEvidenceFilter] = useState<'todos' | 'abierto' | 'en_proceso' | 'subsanado'>('todos');
@@ -402,6 +419,7 @@ export default function HomePage() {
           setProgramInitialComite('TODOS');
           setIsProgramModalOpen(true);
         }}
+        onOpenAssignMember={() => handleOpenAssignMember('COPASST')}
         onLogout={handleLogout}
         activeSection={activeSection}
         setActiveSection={setActiveSection}
@@ -839,60 +857,102 @@ export default function HomePage() {
 
             {/* Members Grid */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-blue-600" />
-                  Miembros Activos del COPASST ({members.filter(m => m.comite === 'COPASST').length})
-                </h3>
-                <span className="text-[10px] text-slate-500">
-                  Vigencia: {company.vigenciaComitesDesde} al {company.vigenciaComitesHasta}
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-blue-600" />
+                    Miembros Activos del COPASST ({members.filter(m => m.comite === 'COPASST').length})
+                  </h3>
+                  <span className="text-[10px] text-slate-500">
+                    Vigencia: {company.vigenciaComitesDesde} al {company.vigenciaComitesHasta}
+                  </span>
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => handleOpenAssignMember('COPASST')}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm self-start sm:self-auto transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Asignar Miembro COPASST
+                  </button>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {members
-                  .filter(m => m.comite === 'COPASST')
-                  .map((m) => (
-                    <div
-                      key={m.id}
-                      className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 flex flex-col justify-between"
+              {members.filter(m => m.comite === 'COPASST').length === 0 ? (
+                <div className="text-center py-8 px-4 bg-slate-50 border border-dashed border-slate-300 rounded-2xl space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800">No hay miembros asignados al COPASST todavía</h4>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    Tú tienes el control total para asignar los miembros. Haz clic en "Asignar Miembro COPASST" para seleccionar empleados de SYSNET y definir sus cargos (Presidente, Secretario, Vocales).
+                  </p>
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleOpenAssignMember('COPASST')}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 shadow-sm"
                     >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                              m.representacion === 'Empleador'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {m.representacion}
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
+                      <Plus className="w-4 h-4" /> Asignar Primer Miembro COPASST
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {members
+                    .filter(m => m.comite === 'COPASST')
+                    .map((m) => (
+                      <div
+                        key={m.id}
+                        className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 flex flex-col justify-between"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                                m.representacion === 'Empleador'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {m.representacion}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
+                            <p className="text-[11px] text-blue-700 font-bold">{m.rol}</p>
+                            <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
-                          <p className="text-[11px] text-blue-700 font-bold">{m.rol}</p>
-                          <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
-                        </div>
-                      </div>
 
-                      <div className="text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 flex items-center justify-between">
-                        <span>C.C. {m.cedula}</span>
-                        <button
-                          onClick={() => {
-                            setProgramInitialTab('funciones');
-                            setProgramInitialComite('COPASST');
-                            setIsProgramModalOpen(true);
-                          }}
-                          className="text-[10px] font-bold text-blue-700 hover:text-blue-900 hover:underline"
-                        >
-                          Funciones →
-                        </button>
+                        <div className="text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 flex items-center justify-between">
+                          <span>C.C. {m.cedula}</span>
+                          <div className="flex items-center gap-1.5">
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleOpenAssignMember('COPASST', m)}
+                                className="p-1 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                title="Editar asignación o retirar del comité"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setProgramInitialTab('funciones');
+                                setProgramInitialComite('COPASST');
+                                setIsProgramModalOpen(true);
+                              }}
+                              className="text-[10px] font-bold text-blue-700 hover:text-blue-900 hover:underline"
+                            >
+                              Funciones →
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-              </div>
+                    ))}
+                </div>
+              )}
             </div>
 
             {/* Actas de COPASST */}
@@ -1064,55 +1124,102 @@ export default function HomePage() {
 
             {/* Miembros de COCOLAB */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
-              <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                <UserCheck className="w-4 h-4 text-rose-600" />
-                Miembros Acreditados del COCOLAB ({members.filter(m => m.comite === 'COCOLAB').length})
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {members
-                  .filter(m => m.comite === 'COCOLAB')
-                  .map((m) => (
-                    <div
-                      key={m.id}
-                      className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 flex flex-col justify-between"
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                              m.representacion === 'Empleador'
-                                ? 'bg-rose-100 text-rose-800'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {m.representacion}
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
-                          <p className="text-[11px] text-rose-700 font-bold">{m.rol}</p>
-                          <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
-                        </div>
-                      </div>
-
-                      <div className="text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 flex items-center justify-between">
-                        <span>C.C. {m.cedula}</span>
-                        <button
-                          onClick={() => {
-                            setProgramInitialTab('funciones');
-                            setProgramInitialComite('COCOLAB');
-                            setIsProgramModalOpen(true);
-                          }}
-                          className="text-[10px] font-bold text-rose-700 hover:text-rose-900 hover:underline"
-                        >
-                          Funciones →
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-rose-600" />
+                    Miembros Acreditados del COCOLAB ({members.filter(m => m.comite === 'COCOLAB').length})
+                  </h3>
+                  <span className="text-[10px] text-slate-500">
+                    Vigencia: {company.vigenciaComitesDesde} al {company.vigenciaComitesHasta}
+                  </span>
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => handleOpenAssignMember('COCOLAB')}
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm self-start sm:self-auto transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Asignar Miembro COCOLAB
+                  </button>
+                )}
               </div>
+
+              {members.filter(m => m.comite === 'COCOLAB').length === 0 ? (
+                <div className="text-center py-8 px-4 bg-slate-50 border border-dashed border-slate-300 rounded-2xl space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+                    <HeartHandshake className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800">No hay miembros asignados al COCOLAB todavía</h4>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    Tú tienes el control total para asignar los miembros. Haz clic en "Asignar Miembro COCOLAB" para seleccionar empleados de SYSNET y definir sus cargos (Presidente, Secretario, Vocales).
+                  </p>
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleOpenAssignMember('COCOLAB')}
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" /> Asignar Primer Miembro COCOLAB
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {members
+                    .filter(m => m.comite === 'COCOLAB')
+                    .map((m) => (
+                      <div
+                        key={m.id}
+                        className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 flex flex-col justify-between"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                                m.representacion === 'Empleador'
+                                  ? 'bg-rose-100 text-rose-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {m.representacion}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
+                            <p className="text-[11px] text-rose-700 font-bold">{m.rol}</p>
+                            <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 flex items-center justify-between">
+                          <span>C.C. {m.cedula}</span>
+                          <div className="flex items-center gap-1.5">
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleOpenAssignMember('COCOLAB', m)}
+                                className="p-1 text-slate-500 hover:text-rose-700 hover:bg-rose-50 rounded transition-colors"
+                                title="Editar asignación o retirar del comité"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setProgramInitialTab('funciones');
+                                setProgramInitialComite('COCOLAB');
+                                setIsProgramModalOpen(true);
+                              }}
+                              className="text-[10px] font-bold text-rose-700 hover:text-rose-900 hover:underline"
+                            >
+                              Funciones →
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
 
             {/* Quejas Radicadas (Visible only if permitted) */}
@@ -1600,50 +1707,100 @@ export default function HomePage() {
               </button>
             </div>
 
+            {/* Hitos del Proceso Electoral y Cronograma Oficial */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+                <div className="text-[10px] uppercase font-bold text-blue-700 tracking-wider">
+                  Hito 1 • Sufragio Libre
+                </div>
+                <div className="text-sm font-bold text-blue-950 mt-1">
+                  20 de Junio de 2026
+                </div>
+                <div className="text-xs text-blue-800 mt-0.5">
+                  Votaciones electrónicas / presenciales de los trabajadores de SYSNET.
+                </div>
+              </div>
+
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                <div className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">
+                  Hito 2 • Escrutinio y Resultados
+                </div>
+                <div className="text-sm font-bold text-emerald-950 mt-1">
+                  25 de Junio de 2026
+                </div>
+                <div className="text-xs text-emerald-800 mt-0.5">
+                  Proclamación de resultados oficiales y asignación de representantes.
+                </div>
+              </div>
+
+              <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl">
+                <div className="text-[10px] uppercase font-bold text-purple-700 tracking-wider">
+                  Hito 3 • Primera Sesión
+                </div>
+                <div className="text-sm font-bold text-purple-950 mt-1">
+                  18 de Noviembre de 2026
+                </div>
+                <div className="text-xs text-purple-800 mt-0.5">
+                  Primera reunión oficial de instalación de comités (Acta #01).
+                </div>
+              </div>
+            </div>
+
             {/* Estado del proceso */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">
                     Elección de {eleccion.comite} • Periodo {eleccion.periodo}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Total votos escrutados: {eleccion.totalVotosEmitidos} ({eleccion.votosEnBlanco} en blanco)
+                    Votaciones: 20 de junio • Resultados: 25 de junio • Vigencia estatutaria: 2026 - 2028
                   </p>
                 </div>
                 {isAdmin && (
                   <button
                     onClick={() => handleGenerarActaPosesion(eleccion)}
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-sm"
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm self-start sm:self-auto transition-colors"
                   >
                     Generar Acta de Posesión
                   </button>
                 )}
               </div>
 
-              {/* Candidatos Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {eleccion.candidatos.map((c) => (
-                  <div
-                    key={c.id}
-                    className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-white border border-slate-300 flex items-center justify-center font-bold text-blue-700 shadow-sm">
-                        #{c.numeroTarjeton}
+              {/* Candidatos Cards o Estado */}
+              {eleccion.candidatos.length === 0 ? (
+                <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-center space-y-2">
+                  <p className="text-xs font-semibold text-slate-700">
+                    Proceso de elección concluido para el periodo estatutario 2026 - 2028.
+                  </p>
+                  <p className="text-[11px] text-slate-500 max-w-lg mx-auto">
+                    Los trabajadores elegidos y los representantes del empleador se registran directamente en los comités con el botón <strong>"Asignar Miembro"</strong> en las pestañas COPASST y COCOLAB.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {eleccion.candidatos.map((c) => (
+                    <div
+                      key={c.id}
+                      className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white border border-slate-300 flex items-center justify-center font-bold text-blue-700 shadow-sm">
+                          #{c.numeroTarjeton}
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-900">{c.nombre}</h4>
+                          <p className="text-[11px] text-slate-500">{c.cargo} • {c.area}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900">{c.nombre}</h4>
-                        <p className="text-[11px] text-slate-500">{c.cargo} • {c.area}</p>
+                      <div className="text-right">
+                        <span className="text-base font-bold text-emerald-700">{c.votos}</span>
+                        <span className="text-[10px] text-slate-400 block">votos</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-base font-bold text-emerald-700">{c.votos}</span>
-                      <span className="text-[10px] text-slate-400 block">votos</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1727,6 +1884,14 @@ export default function HomePage() {
         initialTab={programInitialTab}
         initialComite={programInitialComite}
         onRedactarActa={handleRedactarActaDesdeCronograma}
+      />
+
+      <CommitteeMemberModal
+        isOpen={isMemberModalOpen}
+        onClose={() => setIsMemberModalOpen(false)}
+        initialComite={selectedMemberComite}
+        memberToEdit={memberToEdit}
+        onMemberSaved={handleMemberSaved}
       />
 
       {/* Preview Full Image Modal */}
