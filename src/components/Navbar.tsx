@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Camera, FileText, Building2, Smartphone, BookOpen, Users, ChevronDown, LogOut } from 'lucide-react';
+import { Shield, Camera, FileText, Building2, Smartphone, BookOpen, Users, ChevronDown, LogOut, Calendar } from 'lucide-react';
 import { CompanyProfile, UserSession } from '@/types';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
   onOpenActa: () => void;
   onOpenCompany: () => void;
   onOpenManual: () => void;
+  onOpenProgram: () => void;
   onLogout: () => void;
   activeSection: string;
   setActiveSection: (s: string) => void;
@@ -27,6 +28,7 @@ export default function Navbar({
   onOpenActa,
   onOpenCompany,
   onOpenManual,
+  onOpenProgram,
   onLogout,
   activeSection,
   setActiveSection,
@@ -108,7 +110,8 @@ export default function Navbar({
               { id: 'dashboard', label: 'Dashboard' },
               { id: 'copasst', label: 'COPASST' },
               { id: 'cocolab', label: 'COCOLAB' },
-              { id: 'evidencias', label: 'Evidencias Fotográficas' },
+              { id: 'plan', label: 'Plan & Cronograma' },
+              { id: 'evidencias', label: 'Evidencias' },
               { id: 'actas', label: 'Actas Oficiales' },
               { id: 'elecciones', label: 'Elecciones' },
             ].map((item) => (
@@ -128,12 +131,22 @@ export default function Navbar({
 
           {/* Action Buttons & User Profile */}
           <div className="flex items-center gap-2">
+            {/* Funciones por Cargo y Cronograma Mensual */}
+            <button
+              onClick={onOpenProgram}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold transition-all shadow-sm"
+              title="Funciones por Cargo en Comité, Tiempos (4 Horas) y Cronograma Mes a Mes"
+            >
+              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Funciones & Plan</span>
+            </button>
+
             {/* Gestión de Empleados y Usuarios (Wendy / Admin) */}
             {canManageUsers && (
               <button
                 onClick={onOpenUsers}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition-all shadow-sm"
-                title="Censo de Empleados de la Empresa y Gestión de Usuarios (Wendy RRHH)"
+                title="Censo de Empleados de SYSNET y Gestión de Accesos (Wendy RRHH)"
               >
                 <Users className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Empleados</span>

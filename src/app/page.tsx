@@ -38,10 +38,12 @@ import CompanyModal from '@/components/CompanyModal';
 import ManualModal from '@/components/ManualModal';
 import LoginModal from '@/components/LoginModal';
 import UserManagementModal from '@/components/UserManagementModal';
+import CommitteeProgramModal from '@/components/CommitteeProgramModal';
 import { storage, formatRiesgos } from '@/lib/storage';
-import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion, UserSession } from '@/types';
+import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion, UserSession, CronogramaItem } from '@/types';
 import { calcularEstructuraCopasst, calcularEstructuraCocolab, PERIODICIDAD_LEGAL } from '@/lib/colombianLaw';
 import { exportarActaPDF } from '@/lib/pdfGenerator';
+import { FUNCIONES_CARGOS_COPASST, FUNCIONES_CARGOS_COCOLAB, TIEMPO_DEDICACION_LEGAL, committeeProgramStorage } from '@/lib/committeeProgram';
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
@@ -68,6 +70,9 @@ export default function HomePage() {
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isProgramModalOpen, setIsProgramModalOpen] = useState(false);
+  const [programInitialTab, setProgramInitialTab] = useState<'cronograma' | 'funciones' | 'tiempos'>('cronograma');
+  const [programInitialComite, setProgramInitialComite] = useState<'TODOS' | 'COPASST' | 'COCOLAB'>('TODOS');
 
   // Evidence Filter
   const [evidenceFilter, setEvidenceFilter] = useState<'todos' | 'abierto' | 'en_proceso' | 'subsanado'>('todos');
@@ -135,6 +140,63 @@ export default function HomePage() {
       updated = storage.addActa(newActa);
     }
     setActas(updated);
+  };
+
+  const handleRedactarActaDesdeCronograma = (tituloMes: string, comite: 'COPASST' | 'COCOLAB') => {
+    setIsProgramModalOpen(false);
+    const year = new Date().getFullYear();
+    const count = actas.filter(a => a.comite === comite).length + 1;
+    const consecutivo = `ACTA-${comite}-${year}-${String(count).padStart(3, '0')}`;
+    
+    setSelectedActaForEdit({
+      id: 'acta-' + Date.now(),
+      consecutivo,
+      tipo: comite === 'COPASST' ? 'ordinaria_copasst' : 'ordinaria_cocolab',
+      comite,
+      titulo: `Reunión Ordinaria de ${comite} - ${tituloMes}`,
+      fecha: new Date().toISOString().split('T')[0],
+      horaInicio: '09:00 AM',
+      horaFin: '11:00 AM',
+      lugar: 'Sede Principal SYSNET - Sala de Juntas',
+      asistentes: members
+        .filter(m => m.comite === comite)
+        .map(m => ({
+          nombre: m.nombre,
+          cedula: m.cedula,
+          cargo: m.cargo,
+          rolEnComite: `${m.rol} (${m.condicion})`,
+          representacion: m.representacion,
+          asistio: true,
+        })),
+      ordenDelDia: [
+        '1. Verificación del quórum reglamentario',
+        '2. Revisión y aprobación del acta anterior',
+        `3. Desarrollo de tareas programadas del mes: ${tituloMes}`,
+        '4. Asignación y seguimiento de compromisos',
+        '5. Proposiciones y varios',
+      ],
+      desarrolloPuntos: [
+        {
+          punto: `Desarrollo de actividades programadas: ${tituloMes}`,
+          desarrollo: `En la fecha se instala la sesión ordinaria de ${comite} en las instalaciones de SYSNET S.A.S. Se abordaron los puntos fijados en el cronograma anual de actividades: ${tituloMes}, revisando inspecciones, compromisos y entregables correspondientes al presente mes.`,
+        },
+      ],
+      compromisos: [
+        {
+          id: 'comp-' + Date.now(),
+          descripcion: `Ejecutar y documentar los entregables correspondientes a ${tituloMes}`,
+          responsable: comite === 'COPASST' ? 'OSORIO CHICO JAIDER LINCOLN / MARIMON CAROLINA' : 'MERLANO TOMAS / RIVERO CESAR',
+          fechaLimite: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
+          estado: 'en_proceso',
+        },
+      ],
+      evidenciasIds: [],
+      firmasDigitales: [],
+      estado: 'borrador',
+      creadoPor: session?.nombre || 'Secretario del Comité',
+      createdAt: new Date().toISOString(),
+    });
+    setIsActaModalOpen(true);
   };
 
   const handleSaveQueja = (newQueja: QuejaCocolab) => {
@@ -335,6 +397,11 @@ export default function HomePage() {
         }}
         onOpenCompany={() => setIsCompanyModalOpen(true)}
         onOpenManual={() => setIsManualModalOpen(true)}
+        onOpenProgram={() => {
+          setProgramInitialTab('cronograma');
+          setProgramInitialComite('TODOS');
+          setIsProgramModalOpen(true);
+        }}
         onLogout={handleLogout}
         activeSection={activeSection}
         setActiveSection={setActiveSection}
@@ -730,6 +797,46 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Banner Informativo y Acceso Rápido a Funciones y Cronograma COPASST */}
+            <div className="p-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-white border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-600 text-white rounded-xl shadow-md flex-shrink-0">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-blue-950">
+                    Plan de Trabajo Anual, Funciones por Cargo y Tiempos de Ley
+                  </h4>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    Cronograma de 12 meses (inspecciones, alturas, emergencias), 4 horas semanales de ley y funciones obligatorias (Res. 2013/86).
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => {
+                    setProgramInitialTab('cronograma');
+                    setProgramInitialComite('COPASST');
+                    setIsProgramModalOpen(true);
+                  }}
+                  className="flex-1 sm:flex-initial px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                >
+                  Ver Cronograma Mensual
+                </button>
+                <button
+                  onClick={() => {
+                    setProgramInitialTab('funciones');
+                    setProgramInitialComite('COPASST');
+                    setIsProgramModalOpen(true);
+                  }}
+                  className="flex-1 sm:flex-initial px-3 py-1.5 bg-white hover:bg-slate-50 text-blue-700 border border-blue-300 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                >
+                  Funciones por Cargo
+                </button>
+              </div>
+            </div>
+
             {/* Members Grid */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
@@ -748,27 +855,40 @@ export default function HomePage() {
                   .map((m) => (
                     <div
                       key={m.id}
-                      className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2"
+                      className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 flex flex-col justify-between"
                     >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                            m.representacion === 'Empleador'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-emerald-100 text-emerald-800'
-                          }`}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                              m.representacion === 'Empleador'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            {m.representacion}
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
+                          <p className="text-[11px] text-blue-700 font-bold">{m.rol}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
+                        </div>
+                      </div>
+
+                      <div className="text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 flex items-center justify-between">
+                        <span>C.C. {m.cedula}</span>
+                        <button
+                          onClick={() => {
+                            setProgramInitialTab('funciones');
+                            setProgramInitialComite('COPASST');
+                            setIsProgramModalOpen(true);
+                          }}
+                          className="text-[10px] font-bold text-blue-700 hover:text-blue-900 hover:underline"
                         >
-                          {m.representacion}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
-                        <p className="text-[11px] text-blue-700 font-medium">{m.rol}</p>
-                        <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
-                      </div>
-                      <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-200">
-                        C.C. {m.cedula} • Posesión: {m.fechaPosesion}
+                          Funciones →
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -902,6 +1022,46 @@ export default function HomePage() {
               </div>
             )}
 
+            {/* Banner Informativo y Acceso Rápido a Funciones y Cronograma COCOLAB */}
+            <div className="p-4 bg-gradient-to-r from-rose-50 via-pink-50 to-white border border-rose-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-rose-600 text-white rounded-xl shadow-md flex-shrink-0">
+                  <HeartHandshake className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-rose-950">
+                    Plan Preventivo de Convivencia, Funciones por Cargo y Reserva Legal
+                  </h4>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    Sesiones trimestrales ordinarias, audiencias conciliatorias privadas y protocolo ante la Ley 2365 de 2024.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => {
+                    setProgramInitialTab('cronograma');
+                    setProgramInitialComite('COCOLAB');
+                    setIsProgramModalOpen(true);
+                  }}
+                  className="flex-1 sm:flex-initial px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                >
+                  Ver Cronograma Trimestral
+                </button>
+                <button
+                  onClick={() => {
+                    setProgramInitialTab('funciones');
+                    setProgramInitialComite('COCOLAB');
+                    setIsProgramModalOpen(true);
+                  }}
+                  className="flex-1 sm:flex-initial px-3 py-1.5 bg-white hover:bg-slate-50 text-rose-700 border border-rose-300 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                >
+                  Funciones por Cargo
+                </button>
+              </div>
+            </div>
+
             {/* Miembros de COCOLAB */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
               <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
@@ -915,27 +1075,40 @@ export default function HomePage() {
                   .map((m) => (
                     <div
                       key={m.id}
-                      className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2"
+                      className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 flex flex-col justify-between"
                     >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                            m.representacion === 'Empleador'
-                              ? 'bg-rose-100 text-rose-800'
-                              : 'bg-emerald-100 text-emerald-800'
-                          }`}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                              m.representacion === 'Empleador'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            {m.representacion}
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
+                          <p className="text-[11px] text-rose-700 font-bold">{m.rol}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
+                        </div>
+                      </div>
+
+                      <div className="text-[10px] text-slate-400 pt-1.5 border-t border-slate-200 flex items-center justify-between">
+                        <span>C.C. {m.cedula}</span>
+                        <button
+                          onClick={() => {
+                            setProgramInitialTab('funciones');
+                            setProgramInitialComite('COCOLAB');
+                            setIsProgramModalOpen(true);
+                          }}
+                          className="text-[10px] font-bold text-rose-700 hover:text-rose-900 hover:underline"
                         >
-                          {m.representacion}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-mono">{m.condicion}</span>
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900">{m.nombre}</h4>
-                        <p className="text-[11px] text-rose-700 font-medium">{m.rol}</p>
-                        <p className="text-[10px] text-slate-500 truncate">{m.cargo}</p>
-                      </div>
-                      <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-200">
-                        C.C. {m.cedula} • Posesión: {m.fechaPosesion}
+                          Funciones →
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -1001,6 +1174,203 @@ export default function HomePage() {
                 )}
               </div>
             ) : null}
+          </div>
+        )}
+
+        {/* SECTION: PLAN DE TRABAJO, FUNCIONES POR CARGO Y CRONOGRAMA */}
+        {activeSection === 'plan' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-indigo-600" />
+                  Plan de Trabajo Anual 2026, Funciones por Cargo y Cronograma Operativo
+                </h2>
+                <p className="text-xs text-slate-500">
+                  SYSNET S.A.S. • Resolución 2013 de 1986, Resolución 652 de 2012, Decreto 1072 de 2015 y Ley 2365 de 2024
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setProgramInitialTab('cronograma');
+                    setProgramInitialComite('TODOS');
+                    setIsProgramModalOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Abrir Vista Completa
+                </button>
+              </div>
+            </div>
+
+            {/* Tarjetas Informativas de Tiempos y Mandato */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm">
+                <span className="text-[10px] text-slate-500 font-bold uppercase block">Período de Vigencia</span>
+                <strong className="text-base text-slate-900 block mt-0.5">2 Años</strong>
+                <span className="text-[10px] text-blue-700 font-mono">15/01/2026 - 14/01/2028</span>
+              </div>
+
+              <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl shadow-sm">
+                <span className="text-[10px] text-blue-700 font-bold uppercase block">Dedicación Semanal</span>
+                <strong className="text-base text-blue-900 block mt-0.5">4 Horas / Semana</strong>
+                <span className="text-[10px] text-blue-600 font-semibold">Remuneradas por Ley</span>
+              </div>
+
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl shadow-sm">
+                <span className="text-[10px] text-rose-700 font-bold uppercase block">Sesiones COCOLAB</span>
+                <strong className="text-base text-rose-900 block mt-0.5">Cada 3 Meses</strong>
+                <span className="text-[10px] text-rose-600 font-semibold">Res. 1356 de 2012</span>
+              </div>
+
+              <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-xl shadow-sm">
+                <span className="text-[10px] text-purple-700 font-bold uppercase block">Archivo de Actas</span>
+                <strong className="text-base text-purple-900 block mt-0.5">20 Años</strong>
+                <span className="text-[10px] text-purple-600 font-semibold">Custodia legal obligatoria</span>
+              </div>
+            </div>
+
+            {/* Accesos Rápidos a Funciones Principales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Bloque COPASST */}
+              <div className="bg-white border border-blue-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-blue-100">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-sm font-bold text-blue-950">Funciones por Cargo COPASST</h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setProgramInitialTab('funciones');
+                      setProgramInitialComite('COPASST');
+                      setIsProgramModalOpen(true);
+                    }}
+                    className="text-xs font-bold text-blue-700 hover:underline"
+                  >
+                    Ver Todas →
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {FUNCIONES_CARGOS_COPASST.map((fc, idx) => (
+                    <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-extrabold text-blue-900">{fc.cargo}</span>
+                        <span className="text-[10px] text-slate-500 font-medium">{fc.titularActual}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 leading-snug">
+                        {fc.funciones[0]}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bloque COCOLAB */}
+              <div className="bg-white border border-rose-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-rose-100">
+                  <div className="flex items-center gap-2">
+                    <HeartHandshake className="w-5 h-5 text-rose-600" />
+                    <h3 className="text-sm font-bold text-rose-950">Funciones por Cargo COCOLAB</h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setProgramInitialTab('funciones');
+                      setProgramInitialComite('COCOLAB');
+                      setIsProgramModalOpen(true);
+                    }}
+                    className="text-xs font-bold text-rose-700 hover:underline"
+                  >
+                    Ver Todas →
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {FUNCIONES_CARGOS_COCOLAB.map((fc, idx) => (
+                    <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-extrabold text-rose-900">{fc.cargo}</span>
+                        <span className="text-[10px] text-slate-500 font-medium">{fc.titularActual}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 leading-snug">
+                        {fc.funciones[0]}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Cronograma Resumido Mes a Mes */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-indigo-600" />
+                    Cronograma Operativo de 12 Meses (SYSNET 2026)
+                  </h3>
+                  <p className="text-xs text-slate-500">Programación detallada para empezar a trabajar de inmediato mes por mes</p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setProgramInitialTab('cronograma');
+                    setProgramInitialComite('TODOS');
+                    setIsProgramModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                >
+                  Ver Cronograma Interactivo
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {committeeProgramStorage.getCronograma().map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      setProgramInitialTab('cronograma');
+                      setProgramInitialComite('TODOS');
+                      setIsProgramModalOpen(true);
+                    }}
+                    className="p-3.5 bg-slate-50 hover:bg-blue-50/50 border border-slate-200 hover:border-blue-300 rounded-xl cursor-pointer transition-all space-y-2 group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 rounded bg-slate-900 text-white text-[10px] font-mono font-bold">
+                        {item.mes}
+                      </span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase border ${
+                        item.comite === 'COPASST'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : item.comite === 'COCOLAB'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                      }`}>
+                        {item.comite}
+                      </span>
+                    </div>
+
+                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-700 line-clamp-1">
+                      {item.titulo}
+                    </h4>
+
+                    <p className="text-[11px] text-slate-500 line-clamp-2">
+                      {item.descripcion}
+                    </p>
+
+                    <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-200 flex items-center justify-between">
+                      <span className="truncate">Resp: {item.cargoResponsable}</span>
+                      <span className={item.completada ? 'text-emerald-600 font-bold' : 'text-amber-600 font-semibold'}>
+                        {item.completada ? '✓ Cumplido' : 'Pendiente'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -1349,6 +1719,14 @@ export default function HomePage() {
         onClose={() => setIsUserModalOpen(false)}
         currentUser={session}
         onSwitchUser={handleLogin}
+      />
+
+      <CommitteeProgramModal
+        isOpen={isProgramModalOpen}
+        onClose={() => setIsProgramModalOpen(false)}
+        initialTab={programInitialTab}
+        initialComite={programInitialComite}
+        onRedactarActa={handleRedactarActaDesdeCronograma}
       />
 
       {/* Preview Full Image Modal */}

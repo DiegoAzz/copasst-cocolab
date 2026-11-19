@@ -244,3 +244,30 @@ export interface ProcesoEleccion {
   votosEnBlanco: number;
   jurados: string[];
 }
+
+export interface CronogramaItem {
+  id: string;
+  mes: string;
+  numeroMes: number; // 1 a 12
+  comite: 'COPASST' | 'COCOLAB' | 'AMBOS';
+  titulo: string;
+  descripcion: string;
+  cargoResponsable: string;
+  responsableNombre?: string;
+  tareas: string[];
+  entregable: string;
+  completada: boolean;
+  fechaEjecucion?: string;
+  observaciones?: string;
+}
+
+export interface FuncionCargo {
+  cargo: string;
+  comite: 'COPASST' | 'COCOLAB';
+  titularActual: string;
+  cedula: string;
+  normativa: string;
+  tiempoDedicacion: string;
+  funciones: string[];
+  responsabilidadesLegales: string[];
+}
