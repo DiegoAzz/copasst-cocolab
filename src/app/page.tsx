@@ -43,6 +43,7 @@ import LoginModal from '@/components/LoginModal';
 import UserManagementModal from '@/components/UserManagementModal';
 import CommitteeProgramModal from '@/components/CommitteeProgramModal';
 import CommitteeMemberModal from '@/components/CommitteeMemberModal';
+import EvidenceEditorModal from '@/components/EvidenceEditorModal';
 import { storage, formatRiesgos } from '@/lib/storage';
 import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion, UserSession, CronogramaItem } from '@/types';
 import { calcularEstructuraCopasst, calcularEstructuraCocolab, PERIODICIDAD_LEGAL } from '@/lib/colombianLaw';
@@ -89,6 +90,27 @@ export default function HomePage() {
 
   const handleMemberSaved = () => {
     setMembers(storage.getMembers());
+  };
+
+  // Evidence Editor State
+  const [selectedEvidenceForEdit, setSelectedEvidenceForEdit] = useState<Evidence | null>(null);
+  const [isEvidenceEditorOpen, setIsEvidenceEditorOpen] = useState(false);
+
+  const handleOpenEditEvidence = (evidence: Evidence) => {
+    setSelectedEvidenceForEdit(evidence);
+    setIsEvidenceEditorOpen(true);
+  };
+
+  const handleSaveEditedEvidence = (updated: Evidence) => {
+    const list = storage.updateEvidence(updated.id, updated);
+    setEvidences(list);
+  };
+
+  const handleDeleteEvidence = (id: string) => {
+    if (confirm('¿Estás seguro de que deseas eliminar permanentemente esta evidencia fotográfica?')) {
+      const list = storage.deleteEvidence(id);
+      setEvidences(list);
+    }
   };
 
   // Evidence Filter
@@ -1534,18 +1556,16 @@ export default function HomePage() {
                   className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col"
                 >
                   {/* Photo Display */}
-                  <div
-                    onClick={() => setPreviewImage(ev.imagenAntes)}
-                    className="relative aspect-video bg-slate-900 cursor-pointer group overflow-hidden"
-                  >
+                  <div className="relative aspect-video bg-slate-900 group overflow-hidden">
                     <img
                       src={ev.imagenAntes}
                       alt={ev.titulo}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onClick={() => setPreviewImage(ev.imagenAntes)}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
                     />
-                    <div className="absolute top-2.5 right-2.5">
+                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
                       <span
-                        className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider backdrop-blur-md ${
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-xs ${
                           ev.estado === 'subsanado'
                             ? 'bg-emerald-600 text-white'
                             : ev.estado === 'en_proceso'
@@ -1556,14 +1576,44 @@ export default function HomePage() {
                         {ev.estado}
                       </span>
                     </div>
+
+                    {/* Quick overlay buttons for Edit & Delete */}
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEditEvidence(ev);
+                        }}
+                        className="p-1.5 bg-white/90 hover:bg-white text-slate-800 rounded-lg shadow-sm text-xs font-semibold flex items-center gap-1"
+                        title="Editar hallazgo"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span className="text-[10px]">Editar</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteEvidence(ev.id);
+                        }}
+                        className="p-1.5 bg-white/90 hover:bg-white text-rose-600 rounded-lg shadow-sm text-xs font-semibold"
+                        title="Eliminar evidencia permanentemente"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Details */}
                   <div className="p-4 space-y-2.5 flex-1 flex flex-col justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
-                        {ev.clasificacion}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                          {ev.clasificacion}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          ID: {ev.id.slice(-6)}
+                        </span>
+                      </div>
                       <h4 className="text-sm font-bold text-slate-900 mt-0.5">{ev.titulo}</h4>
                       <p className="text-xs text-slate-500 font-medium">{ev.peligroGTC45}</p>
                       <p className="text-xs text-slate-600 mt-2 line-clamp-2">{ev.descripcion}</p>
@@ -1574,23 +1624,45 @@ export default function HomePage() {
                         <span>📍 {ev.areaLugar}</span>
                         <span>📅 {ev.fecha} {ev.hora}</span>
                       </div>
-                      <div className="text-slate-700">
-                        <strong>Medida:</strong> {ev.medidaCorrectiva}
+                      <div className="text-slate-700 text-xs">
+                        <strong>Medida:</strong> {ev.medidaCorrectiva || 'Por definir'}
                       </div>
 
-                      {ev.estado !== 'subsanado' ? (
-                        <button
-                          onClick={() => handleSubsanarEvidencia(ev)}
-                          className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          Marcar como Subsanado
-                        </button>
-                      ) : (
-                        <div className="text-emerald-700 text-[10px] font-semibold text-center py-1">
-                          ✓ Subsanado el {ev.fechaCierre || ev.fecha}
+                      {/* Card Action Controls: Subsanar, Editar, Eliminar */}
+                      <div className="pt-1.5 space-y-1.5">
+                        {ev.estado !== 'subsanado' ? (
+                          <button
+                            onClick={() => handleSubsanarEvidencia(ev)}
+                            className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            Marcar como Subsanado
+                          </button>
+                        ) : (
+                          <div className="text-emerald-700 text-xs font-bold text-center py-1 flex items-center justify-center gap-1 bg-emerald-50 rounded-xl border border-emerald-100">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Subsanado el {ev.fechaCierre || ev.fecha}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleOpenEditEvidence(ev)}
+                            className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-200 transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            Editar Hallazgo
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEvidence(ev.id)}
+                            className="px-3 py-1.5 text-rose-600 hover:bg-rose-50 border border-rose-200 hover:border-rose-300 font-bold rounded-xl text-xs flex items-center justify-center gap-1 transition-colors"
+                            title="Eliminar esta evidencia de forma definitiva"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Eliminar
+                          </button>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1892,6 +1964,14 @@ export default function HomePage() {
         initialComite={selectedMemberComite}
         memberToEdit={memberToEdit}
         onMemberSaved={handleMemberSaved}
+      />
+
+      <EvidenceEditorModal
+        isOpen={isEvidenceEditorOpen}
+        onClose={() => setIsEvidenceEditorOpen(false)}
+        evidence={selectedEvidenceForEdit}
+        onSave={handleSaveEditedEvidence}
+        onDelete={handleDeleteEvidence}
       />
 
       {/* Preview Full Image Modal */}

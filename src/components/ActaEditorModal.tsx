@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileText, Plus, Trash2, Check, X, PenTool, Calendar, Download } from 'lucide-react';
+import { FileText, Plus, Trash2, Check, X, PenTool, Calendar, Download, Users, UserCheck, UserPlus } from 'lucide-react';
 import { Acta, AsistenteActa, CompromisoActa, PuntoOrdenDia, TipoActa, Member, Evidence, CompanyProfile } from '@/types';
 import SignaturePad from './SignaturePad';
 import { exportarActaPDF } from '@/lib/pdfGenerator';
+import { storage } from '@/lib/storage';
 
 interface Props {
   isOpen: boolean;
@@ -54,6 +55,69 @@ export default function ActaEditorModal({
       asistio: true,
     }));
   });
+
+  const [selectedEmpleadoIdToAdd, setSelectedEmpleadoIdToAdd] = useState('');
+  const empleados = storage.getEmpleados();
+
+  const agregarAsistenteDesdeEmpleado = (empId: string) => {
+    if (!empId) return;
+    const emp = empleados.find(e => e.id === empId);
+    if (!emp) return;
+
+    const exists = asistentes.some(a => a.cedula === emp.cedula || a.nombre.toLowerCase() === emp.nombre.toLowerCase());
+    if (exists) {
+      alert(`El colaborador ${emp.nombre} ya se encuentra en la lista de asistentes.`);
+      return;
+    }
+
+    const memberRole = members.find(m => (m.cedula === emp.cedula || m.nombre === emp.nombre) && (m.comite === comite || comite === 'CONJUNTO'));
+
+    const nuevo: AsistenteActa = {
+      nombre: emp.nombre,
+      cedula: emp.cedula,
+      cargo: emp.cargo || 'Colaborador',
+      rolEnComite: memberRole ? memberRole.rol : 'Invitado / Asistente',
+      representacion: memberRole ? memberRole.representacion : 'Invitado / Asesor',
+      asistio: true,
+    };
+
+    setAsistentes([...asistentes, nuevo]);
+    setSelectedEmpleadoIdToAdd('');
+  };
+
+  const agregarAsistenteVacio = () => {
+    const nuevo: AsistenteActa = {
+      nombre: '',
+      cedula: '',
+      cargo: '',
+      rolEnComite: 'Invitado',
+      representacion: 'Invitado / Asesor',
+      asistio: true,
+    };
+    setAsistentes([...asistentes, nuevo]);
+  };
+
+  const cargarMiembrosComite = () => {
+    const comiteMembers = members.filter(m => m.comite === comite || comite === 'CONJUNTO');
+    if (comiteMembers.length === 0) {
+      alert(`No hay miembros oficiales asignados aún al ${comite}. Puedes asignarlos en el módulo de ${comite} o añadir colaboradores directamente desde el selector.`);
+      return;
+    }
+
+    const nuevosAsistentes: AsistenteActa[] = comiteMembers.map(m => ({
+      nombre: m.nombre,
+      cedula: m.cedula,
+      cargo: m.cargo,
+      rolEnComite: m.rol,
+      representacion: m.representacion,
+      asistio: true,
+    }));
+
+    const existentesCedulas = new Set(asistentes.map(a => a.cedula));
+    const aAgregar = nuevosAsistentes.filter(a => !existentesCedulas.has(a.cedula));
+
+    setAsistentes([...asistentes, ...aAgregar]);
+  };
 
   // Orden del día
   const [ordenDelDia, setOrdenDelDia] = useState<string[]>(
@@ -389,107 +453,172 @@ export default function ActaEditorModal({
           )}
 
           {activeTab === 'asistentes' && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-slate-500">
-                  Lista de verificación de quórum reglamentario según Resolución 2013/1986 o Res. 652/2012:
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const nuevo: AsistenteActa = {
-                      nombre: '',
-                      cedula: '',
-                      cargo: '',
-                      rolEnComite: 'Invitado',
-                      representacion: 'Invitado / Asesor',
-                      asistio: true,
-                    };
-                    setAsistentes([...asistentes, nuevo]);
-                  }}
-                  className="px-3 py-1 bg-white hover:bg-slate-50 text-blue-600 text-xs font-semibold rounded-lg border border-slate-300 flex items-center gap-1 shadow-sm"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Añadir Asistente / Invitado
-                </button>
+            <div className="space-y-4">
+              
+              {/* Selector Bar */}
+              <div className="p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-2xl space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-blue-700" />
+                    <span className="text-xs font-bold text-blue-950">
+                      Añadir Asistente desde la Nómina de Empleados de SYSNET
+                    </span>
+                  </div>
+                  {members.filter(m => m.comite === comite).length > 0 && (
+                    <button
+                      type="button"
+                      onClick={cargarMiembrosComite}
+                      className="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 underline self-start sm:self-auto"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" />
+                      Cargar miembros oficiales del {comite}
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <select
+                    value={selectedEmpleadoIdToAdd}
+                    onChange={(e) => setSelectedEmpleadoIdToAdd(e.target.value)}
+                    className="flex-1 px-3 py-2 text-xs bg-white border border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                  >
+                    <option value="">-- Selecciona un colaborador de SYSNET ({empleados.length} en nómina) --</option>
+                    {empleados.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.nombre} — C.C. {emp.cedula} ({emp.cargo || 'Sin cargo'})
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() => agregarAsistenteDesdeEmpleado(selectedEmpleadoIdToAdd)}
+                    disabled={!selectedEmpleadoIdToAdd}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Añadir a la Reunión
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={agregarAsistenteVacio}
+                    className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shrink-0"
+                    title="Añadir invitado externo que no esté en la nómina (ej. asesor de ARL SURA)"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 text-slate-500" />
+                    Invitado Externo
+                  </button>
+                </div>
               </div>
 
+              {/* Lista de Asistentes */}
               <div className="space-y-2">
-                {asistentes.map((a, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
-                  >
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1 w-full">
-                      <input
-                        type="text"
-                        value={a.nombre}
-                        onChange={(e) => {
-                          const updated = [...asistentes];
-                          updated[idx].nombre = e.target.value;
-                          setAsistentes(updated);
-                        }}
-                        placeholder="Nombre completo"
-                        className="px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
-                      />
-                      <input
-                        type="text"
-                        value={a.cedula}
-                        onChange={(e) => {
-                          const updated = [...asistentes];
-                          updated[idx].cedula = e.target.value;
-                          setAsistentes(updated);
-                        }}
-                        placeholder="Cédula"
-                        className="px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
-                      />
-                      <input
-                        type="text"
-                        value={a.cargo}
-                        onChange={(e) => {
-                          const updated = [...asistentes];
-                          updated[idx].cargo = e.target.value;
-                          setAsistentes(updated);
-                        }}
-                        placeholder="Cargo en empresa"
-                        className="px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
-                      />
-                      <input
-                        type="text"
-                        value={a.rolEnComite}
-                        onChange={(e) => {
-                          const updated = [...asistentes];
-                          updated[idx].rolEnComite = e.target.value;
-                          setAsistentes(updated);
-                        }}
-                        placeholder="Rol en comité"
-                        className="px-2.5 py-1.5 bg-white border border-slate-300 rounded text-xs text-slate-900"
-                      />
-                    </div>
-                    <div className="flex items-center gap-3 self-end sm:self-center">
-                      <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={a.asistio}
-                          onChange={(e) => {
-                            const updated = [...asistentes];
-                            updated[idx].asistio = e.target.checked;
-                            setAsistentes(updated);
-                          }}
-                          className="rounded text-blue-600"
-                        />
-                        Asistió
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setAsistentes(asistentes.filter((_, i) => i !== idx))}
-                        className="text-red-500 hover:text-red-700 p-1"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+                  <span>Asistentes registrados ({asistentes.length}):</span>
+                  <span>Quórum actual: {asistentes.filter(a => a.asistio).length} / {asistentes.length} presentes</span>
+                </div>
+
+                {asistentes.length === 0 ? (
+                  <div className="p-8 text-center bg-slate-50 border border-dashed border-slate-300 rounded-2xl text-xs text-slate-500">
+                    No hay asistentes registrados todavía. Usa el selector arriba para elegir empleados de SYSNET o añadir invitados.
                   </div>
-                ))}
+                ) : (
+                  asistentes.map((a, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                    >
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1 w-full">
+                        <div>
+                          <label className="text-[10px] text-slate-400 font-bold block sm:hidden">Nombre</label>
+                          <input
+                            type="text"
+                            value={a.nombre}
+                            onChange={(e) => {
+                              const updated = [...asistentes];
+                              updated[idx].nombre = e.target.value;
+                              setAsistentes(updated);
+                            }}
+                            placeholder="Nombre completo"
+                            className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 font-semibold"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-400 font-bold block sm:hidden">Cédula</label>
+                          <input
+                            type="text"
+                            value={a.cedula}
+                            onChange={(e) => {
+                              const updated = [...asistentes];
+                              updated[idx].cedula = e.target.value;
+                              setAsistentes(updated);
+                            }}
+                            placeholder="Cédula"
+                            className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-400 font-bold block sm:hidden">Cargo</label>
+                          <input
+                            type="text"
+                            value={a.cargo}
+                            onChange={(e) => {
+                              const updated = [...asistentes];
+                              updated[idx].cargo = e.target.value;
+                              setAsistentes(updated);
+                            }}
+                            placeholder="Cargo en empresa"
+                            className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-400 font-bold block sm:hidden">Rol / Cargo</label>
+                          <input
+                            type="text"
+                            value={a.rolEnComite}
+                            onChange={(e) => {
+                              const updated = [...asistentes];
+                              updated[idx].rolEnComite = e.target.value;
+                              setAsistentes(updated);
+                            }}
+                            placeholder="Rol (Presidente, Vocal, Invitado)"
+                            className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-900"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
+                        <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                          <input
+                            type="checkbox"
+                            checked={a.asistio}
+                            onChange={(e) => {
+                              const updated = [...asistentes];
+                              updated[idx].asistio = e.target.checked;
+                              setAsistentes(updated);
+                            }}
+                            className="rounded text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className={a.asistio ? 'font-bold text-emerald-700' : 'text-slate-400'}>
+                            {a.asistio ? 'Asistió' : 'Ausente'}
+                          </span>
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAsistentes(asistentes.filter((_, i) => i !== idx));
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Quitar asistente"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

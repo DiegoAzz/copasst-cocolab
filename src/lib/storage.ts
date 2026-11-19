@@ -859,6 +859,12 @@ export const storage = {
     storage.saveEvidences(updated);
     return updated;
   },
+  deleteEvidence: (id: string) => {
+    const list = storage.getEvidences();
+    const updated = list.filter(e => e.id !== id);
+    storage.saveEvidences(updated);
+    return updated;
+  },
 
   getActas: (): Acta[] => {
     if (typeof window === 'undefined') return INITIAL_ACTAS;
