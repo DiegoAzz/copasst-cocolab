@@ -252,12 +252,15 @@ export default function HomePage() {
   // RBAC checks
   const isWendyRRHH = session?.rol === 'SUPER_ADMIN_RRHH';
   const isAdmin = session?.rol === 'ADMIN_SST' || isWendyRRHH;
-  const isCopasstMember = session?.rol === 'COPASST' || session?.rol === 'AMBOS_COMITES' || isAdmin;
-  const isCocolabMember = session?.rol === 'COCOLAB' || session?.rol === 'AMBOS_COMITES' || isAdmin;
+  const isBothCommittees = session?.rol === 'AMBOS_COMITES';
+  const isPureCopasst = session?.rol === 'COPASST';
+  const isPureCocolab = session?.rol === 'COCOLAB';
   const isColaborador = session?.rol === 'COLABORADOR';
-  const canManageUsers = isWendyRRHH || isAdmin || session?.rol === 'AMBOS_COMITES';
 
-  const canAccessCocolabPrivates = isCocolabMember || isAdmin;
+  const isCopasstMember = isPureCopasst || isBothCommittees || isAdmin;
+  const isCocolabMember = isPureCocolab || isBothCommittees || isAdmin;
+  const canManageUsers = isWendyRRHH || isAdmin || isBothCommittees;
+  const canAccessCocolabPrivates = isPureCocolab || isBothCommittees || isAdmin;
 
   // PROTECCIÓN ESTRICTA: Ningún usuario puede ver ni interactuar con la plataforma si no ha iniciado sesión
   if (!session) {
@@ -267,15 +270,19 @@ export default function HomePage() {
         <header className="bg-white border-b border-slate-200 py-3.5 px-4 sm:px-6 shadow-sm">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20">
-                <Shield className="w-5 h-5 text-white stroke-[2.5]" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20 overflow-hidden border border-slate-200">
+                {company.logoUrl ? (
+                  <img src={company.logoUrl} alt="Logo" className="w-full h-full object-contain p-0.5 bg-white" />
+                ) : (
+                  <Shield className="w-5 h-5 text-white stroke-[2.5]" />
+                )}
               </div>
               <div>
                 <span className="text-base font-extrabold tracking-tight text-slate-900 font-mono">
                   CoCoPASST
                 </span>
-                <p className="text-[11px] text-slate-500">
-                  {company.razonSocial} • Acceso Protegido SG-SST
+                <p className="text-[11px] text-slate-500 truncate max-w-[200px] sm:max-w-md">
+                  {company.razonSocial} • Acceso Restringido SG-SST
                 </p>
               </div>
             </div>
@@ -290,13 +297,14 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* Login Modal Obligatorio */}
+        {/* Login Obligatorio */}
         <main className="flex-1 flex items-center justify-center p-4">
           <LoginModal
             isOpen={true}
             onClose={() => {}}
             onLogin={handleLogin}
             currentSession={null}
+            company={company}
           />
         </main>
 
@@ -878,12 +886,12 @@ export default function HomePage() {
             </div>
 
             {/* Restricción de Acceso para miembros de COPASST */}
-            {isCopasstMember && (
+            {isPureCopasst && (
               <div className="p-6 bg-amber-50 border border-amber-200 rounded-2xl space-y-2 text-center">
                 <ShieldAlert className="w-8 h-8 text-amber-600 mx-auto" />
                 <h4 className="text-sm font-bold text-amber-900">Acceso Restringido para Delegados de COPASST</h4>
                 <p className="text-xs text-amber-800 max-w-lg mx-auto">
-                  Por mandato de la <strong>Resolución 652 de 2012 (Art. 13)</strong>, el COPASST y el COCOLAB son instancias separadas. Las quejas individuales radicadas están protegidas por reserva legal y solo pueden ser consultadas por los miembros acreditados del Comité de Convivencia Laboral o la Dirección SG-SST.
+                  Por mandato de la <strong>Resolución 652 de 2012 (Art. 13)</strong>, el COPASST y el COCOLAB son instancias separadas. Las quejas individuales radicadas están protegidas por reserva legal y solo pueden ser consultadas por los miembros acreditados del Comité de Convivencia Laboral o Recursos Humanos (Wendy).
                 </p>
                 <button
                   onClick={() => setIsLoginModalOpen(true)}
@@ -1284,6 +1292,7 @@ export default function HomePage() {
         onClose={() => setIsLoginModalOpen(false)}
         onLogin={handleLogin}
         currentSession={session}
+        company={company}
       />
 
       <ManualModal

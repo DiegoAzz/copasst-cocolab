@@ -80,8 +80,12 @@ export default function Navbar({
         <div className="flex items-center justify-between h-16">
           {/* Logo and Brand */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveSection('dashboard')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20">
-              <Shield className="w-5 h-5 text-white stroke-[2.5]" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20 overflow-hidden border border-slate-200">
+              {company.logoUrl ? (
+                <img src={company.logoUrl} alt="Logo" className="w-full h-full object-contain p-0.5 bg-white" />
+              ) : (
+                <Shield className="w-5 h-5 text-white stroke-[2.5]" />
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -178,14 +182,15 @@ export default function Navbar({
               </button>
             )}
 
-            {/* Config Empresa */}
+            {/* Config Empresa & Logo */}
             {canManageUsers && (
               <button
                 onClick={onOpenCompany}
-                className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 shadow-sm"
-                title="Parámetros de Empresa y SG-SST"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold transition-all shadow-sm"
+                title="Configuración de Empresa, Logotipo y Parámetros SG-SST"
               >
-                <Building2 className="w-4 h-4" />
+                <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                <span className="hidden sm:inline">Configuración</span>
               </button>
             )}
 

@@ -17,6 +17,14 @@ export function exportarActaPDF(acta: Acta, empresa: CompanyProfile, evidencias:
   doc.setFillColor(248, 250, 252);
   doc.rect(14, currentY, pageWidth - 28, 26, 'FD');
 
+  if (empresa.logoUrl) {
+    try {
+      doc.addImage(empresa.logoUrl, 'PNG', 16, currentY + 3, 20, 20);
+    } catch {
+      // fallback
+    }
+  }
+
   // Title and company info
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);

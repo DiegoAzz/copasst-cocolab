@@ -54,6 +54,7 @@ export interface CompanyProfile {
   licenciaSST: string;
   vigenciaComitesDesde: string;
   vigenciaComitesHasta: string;
+  logoUrl?: string;
 }
 
 export interface Member {
