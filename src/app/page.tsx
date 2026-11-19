@@ -440,7 +440,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Wendy RRHH User Management Banner if authorized */}
+            {/* Wendy RRHH User & Employee Management Banner if authorized */}
             {canManageUsers && (
               <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 border border-purple-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
                 <div className="flex items-center gap-3">
@@ -449,11 +449,11 @@ export default function HomePage() {
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                      Módulo de Gestión de Usuarios y Comités
+                      Censo de Empleados & Gestión de Usuarios
                       <span className="text-[10px] bg-purple-200 text-purple-900 font-bold px-2 py-0.5 rounded-full">Wendy RRHH / Validadora</span>
                     </h3>
                     <p className="text-[11px] text-slate-600">
-                      Crea y administra usuarios asignando permisos independientes para COPASST, COCOLAB o Ambos comités.
+                      Digita la nómina de empleados, clasifica sus riesgos (Riesgo 1 o 5) y administra sus accesos al sistema.
                     </p>
                   </div>
                 </div>
@@ -462,7 +462,7 @@ export default function HomePage() {
                   className="w-full sm:w-auto px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Gestionar Usuarios</span>
+                  <span>Gestionar Empleados</span>
                 </button>
               </div>
             )}

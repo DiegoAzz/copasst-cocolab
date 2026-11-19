@@ -22,6 +22,22 @@ export interface UserAccount {
   createdAt: string;
 }
 
+export interface Empleado {
+  id: string;
+  nombre: string;
+  cedula: string;
+  cargo: string;
+  area: string;
+  sede: string;
+  nivelRiesgo: NivelRiesgo;
+  email?: string;
+  telefono?: string;
+  fechaIngreso?: string;
+  estado: 'activo' | 'inactivo';
+  tieneAccesoSistema: boolean;
+  comiteAsignado?: 'COPASST' | 'COCOLAB' | 'AMBOS' | 'NINGUNO';
+}
+
 export type UserSession = UserAccount;
 
 export type RiesgoGTC45 = 

@@ -128,15 +128,15 @@ export default function Navbar({
 
           {/* Action Buttons & User Profile */}
           <div className="flex items-center gap-2">
-            {/* Gestión de Usuarios (Wendy / Admin) */}
+            {/* Gestión de Empleados y Usuarios (Wendy / Admin) */}
             {canManageUsers && (
               <button
                 onClick={onOpenUsers}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition-all shadow-sm"
-                title="Módulo de Creación y Gestión de Usuarios (Wendy RRHH)"
+                title="Censo de Empleados de la Empresa y Gestión de Usuarios (Wendy RRHH)"
               >
                 <Users className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Usuarios</span>
+                <span className="hidden sm:inline">Empleados</span>
               </button>
             )}
 

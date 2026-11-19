@@ -1,11 +1,11 @@
 'use client';
 
-import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion, UserAccount, UserSession } from '@/types';
+import { CompanyProfile, Member, Evidence, Acta, QuejaCocolab, ProcesoEleccion, UserAccount, UserSession, Empleado } from '@/types';
 
 export const DEMO_USERS: UserAccount[] = [
   {
     id: 'u-wendy',
-    nombre: 'Wendy (Recursos Humanos)',
+    nombre: 'Wendy Angulo',
     email: 'wendy@empresa.co',
     password: '123',
     cedula: '1.028.456.789',
@@ -19,28 +19,28 @@ export const DEMO_USERS: UserAccount[] = [
     createdAt: '2026-01-10T08:00:00Z',
   },
   {
-    id: 'u-admin',
-    nombre: 'Ing. Carlos Andrés Mendoza',
-    email: 'admin@empresa.co',
+    id: 'u-diego',
+    nombre: 'Diego Zuñiga',
+    email: 'diego@empresa.co',
     password: '123',
-    cedula: '19.458.120',
-    cargo: 'Gerente General & SG-SST',
+    cedula: '1.045.892.331',
+    cargo: 'Dirección General & Líder SG-SST',
     area: 'Alta Dirección',
     rol: 'ADMIN_SST',
     accesoCopasst: true,
     accesoCocolab: true,
-    cargoEnComite: 'Representante Legal',
+    cargoEnComite: 'Representante Legal / SST',
     activo: true,
     createdAt: '2026-01-10T08:00:00Z',
   },
   {
     id: 'u-copasst',
-    nombre: 'Ing. Laura Marcela Gómez Pardo',
-    email: 'copasst@empresa.co',
+    nombre: 'Jaider Osorio Chico',
+    email: 'jaider@empresa.co',
     password: '123',
     cedula: '1.018.452.331',
-    cargo: 'Coordinadora SST',
-    area: 'Seguridad y Salud',
+    cargo: 'Líder de Operaciones y Planta',
+    area: 'Operaciones',
     rol: 'COPASST',
     accesoCopasst: true,
     accesoCocolab: false,
@@ -50,12 +50,12 @@ export const DEMO_USERS: UserAccount[] = [
   },
   {
     id: 'u-cocolab',
-    nombre: 'Felipe Andrés Salamanca Ruiz',
-    email: 'cocolab@empresa.co',
+    nombre: 'Tomas Merlano Florez',
+    email: 'tomas@empresa.co',
     password: '123',
     cedula: '1.022.341.552',
-    cargo: 'Director de Convivencia y Clima Laboral',
-    area: 'Gestión Humana',
+    cargo: 'Coordinador de Logística y Abastecimiento',
+    area: 'Logística',
     rol: 'COCOLAB',
     accesoCopasst: false,
     accesoCocolab: true,
@@ -65,17 +65,410 @@ export const DEMO_USERS: UserAccount[] = [
   },
   {
     id: 'u-colaborador',
-    nombre: 'Andrés Felipe Torres',
-    email: 'colaborador@empresa.co',
+    nombre: 'Nelsy Palacio',
+    email: 'nelsy@empresa.co',
     password: '123',
     cedula: '1.014.558.990',
-    cargo: 'Operador de Bodega y Logística',
-    area: 'Operaciones',
+    cargo: 'Servicio al Cliente y Cartera',
+    area: 'Administración y Ventas',
     rol: 'COLABORADOR',
     accesoCopasst: false,
     accesoCocolab: false,
     activo: true,
     createdAt: '2026-02-01T10:00:00Z',
+  },
+];
+
+export const INITIAL_EMPLEADOS: Empleado[] = [
+  {
+    id: 'emp-1',
+    nombre: 'JAIDER OSORIO CHICO',
+    cedula: '1.018.452.331',
+    cargo: 'Líder de Operaciones y Planta',
+    area: 'Operaciones',
+    sede: 'Sede Principal - Planta Operativa',
+    nivelRiesgo: 5,
+    email: 'jaider@empresa.co',
+    telefono: '310 458 9901',
+    fechaIngreso: '2021-03-15',
+    estado: 'activo',
+    tieneAccesoSistema: true,
+    comiteAsignado: 'COPASST',
+  },
+  {
+    id: 'emp-2',
+    nombre: 'TOMAS MERLANO FLOREZ',
+    cedula: '1.022.341.552',
+    cargo: 'Coordinador de Logística y Abastecimiento',
+    area: 'Logística',
+    sede: 'Sede Principal - Cazucá',
+    nivelRiesgo: 1,
+    email: 'tomas@empresa.co',
+    telefono: '312 889 4402',
+    fechaIngreso: '2022-01-10',
+    estado: 'activo',
+    tieneAccesoSistema: true,
+    comiteAsignado: 'COCOLAB',
+  },
+  {
+    id: 'emp-3',
+    nombre: 'WENDY ANGULO',
+    cedula: '1.028.456.789',
+    cargo: 'Encargada de Recursos Humanos',
+    area: 'Gestión Humana y Talento',
+    sede: 'Sede Principal - Cazucá (Oficinas)',
+    nivelRiesgo: 1,
+    email: 'wendy@empresa.co',
+    telefono: '310 458 9921',
+    fechaIngreso: '2020-05-18',
+    estado: 'activo',
+    tieneAccesoSistema: true,
+    comiteAsignado: 'AMBOS',
+  },
+  {
+    id: 'emp-4',
+    nombre: 'NELSY PALACIO',
+    cedula: '1.014.558.990',
+    cargo: 'Servicio al Cliente y Cartera',
+    area: 'Administración y Ventas',
+    sede: 'Sede Principal - Cazucá (Oficinas)',
+    nivelRiesgo: 1,
+    email: 'nelsy@empresa.co',
+    telefono: '318 662 3304',
+    fechaIngreso: '2023-08-20',
+    estado: 'activo',
+    tieneAccesoSistema: true,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-5',
+    nombre: 'CESAR ANTONIO RIVERO LEIVA',
+    cedula: '80.231.995',
+    cargo: 'Técnico de Mantenimiento y Soldadura',
+    area: 'Mantenimiento Industrial',
+    sede: 'Planta de Operaciones - Taller',
+    nivelRiesgo: 5,
+    email: 'cesar@empresa.co',
+    telefono: '301 554 8805',
+    fechaIngreso: '2021-11-12',
+    estado: 'activo',
+    tieneAccesoSistema: true,
+    comiteAsignado: 'COCOLAB',
+  },
+  {
+    id: 'emp-6',
+    nombre: 'CAROLINA MARIMON SIMARRA',
+    cedula: '53.112.879',
+    cargo: 'Coordinadora de Facturación y Compras',
+    area: 'Administración y Finanzas',
+    sede: 'Sede Principal - Cazucá (Oficinas)',
+    nivelRiesgo: 1,
+    email: 'carolina@empresa.co',
+    telefono: '304 223 9906',
+    fechaIngreso: '2022-04-01',
+    estado: 'activo',
+    tieneAccesoSistema: true,
+    comiteAsignado: 'COPASST',
+  },
+  {
+    id: 'emp-7',
+    nombre: 'DIEGO ZUÑIGA',
+    cedula: '1.045.892.331',
+    cargo: 'Dirección General & Líder SG-SST',
+    area: 'Alta Dirección',
+    sede: 'Sede Principal - Cazucá (Oficinas y Planta)',
+    nivelRiesgo: 1,
+    email: 'diego@empresa.co',
+    telefono: '316 445 6607',
+    fechaIngreso: '2019-02-01',
+    estado: 'activo',
+    tieneAccesoSistema: true,
+    comiteAsignado: 'AMBOS',
+  },
+  {
+    id: 'emp-8',
+    nombre: 'SAMUEL PEÑA',
+    cedula: '1.030.551.487',
+    cargo: 'Operador de Bodega y Montacargas',
+    area: 'Logística y Almacén',
+    sede: 'Centro de Distribución - Patio Operativo',
+    nivelRiesgo: 5,
+    email: 'samuel@empresa.co',
+    telefono: '317 889 2208',
+    fechaIngreso: '2022-09-10',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'COPASST',
+  },
+  {
+    id: 'emp-9',
+    nombre: 'YENISSE PARDO ARIZA',
+    cedula: '52.981.440',
+    cargo: 'Asistente de Gestión Humana y Bienestar',
+    area: 'Gestión Humana y Talento',
+    sede: 'Sede Principal - Cazucá (Oficinas)',
+    nivelRiesgo: 1,
+    email: 'yenisse@empresa.co',
+    telefono: '311 990 4409',
+    fechaIngreso: '2023-06-15',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'COCOLAB',
+  },
+  {
+    id: 'emp-10',
+    nombre: 'CARLOS OLIVERA GUZMAN',
+    cedula: '79.845.120',
+    cargo: 'Supervisor de Despachos y Transporte',
+    area: 'Logística y Transporte',
+    sede: 'Centro de Distribución - Patio Operativo',
+    nivelRiesgo: 5,
+    email: 'colivera@empresa.co',
+    telefono: '319 778 5510',
+    fechaIngreso: '2020-01-18',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'COPASST',
+  },
+  {
+    id: 'emp-11',
+    nombre: 'STEVEN BOSIO LEAL',
+    cedula: '1.020.448.910',
+    cargo: 'Operario de Ensamble y Producción',
+    area: 'Operaciones y Planta',
+    sede: 'Planta de Operaciones',
+    nivelRiesgo: 5,
+    email: 'sbosio@empresa.co',
+    telefono: '313 445 1111',
+    fechaIngreso: '2023-07-22',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-12',
+    nombre: 'ANDRES DAVID PACHECO',
+    cedula: '1.018.992.345',
+    cargo: 'Técnico de Mantenimiento Electromecánico',
+    area: 'Mantenimiento Industrial',
+    sede: 'Planta de Operaciones - Taller',
+    nivelRiesgo: 5,
+    email: 'apacheco@empresa.co',
+    telefono: '314 332 9912',
+    fechaIngreso: '2022-10-05',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-13',
+    nombre: 'LEIDI DANIELA DE LA PUENTE GARCIA',
+    cedula: '1.014.223.901',
+    cargo: 'Auxiliar Administrativa y Documentación',
+    area: 'Administración y Finanzas',
+    sede: 'Sede Principal - Cazucá (Oficinas)',
+    nivelRiesgo: 1,
+    email: 'ldelapuente@empresa.co',
+    telefono: '315 221 8813',
+    fechaIngreso: '2024-01-15',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'COCOLAB',
+  },
+  {
+    id: 'emp-14',
+    nombre: 'FABIAN VARGAS',
+    cedula: '19.458.120',
+    cargo: 'Conductor de Reparto y Logística',
+    area: 'Logística y Transporte',
+    sede: 'Centro de Distribución - Patio Operativo',
+    nivelRiesgo: 5,
+    email: 'fvargas@empresa.co',
+    telefono: '316 998 7714',
+    fechaIngreso: '2021-04-10',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'COPASST',
+  },
+  {
+    id: 'emp-15',
+    nombre: 'CLAUDIA BETANCOURT ALVAREZ',
+    cedula: '52.441.980',
+    cargo: 'Contadora General',
+    area: 'Administración y Finanzas',
+    sede: 'Sede Principal - Cazucá (Oficinas)',
+    nivelRiesgo: 1,
+    email: 'cbetancourt@empresa.co',
+    telefono: '311 445 6615',
+    fechaIngreso: '2020-03-20',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'COCOLAB',
+  },
+  {
+    id: 'emp-16',
+    nombre: 'ANDRES RAMOS',
+    cedula: '1.019.882.440',
+    cargo: 'Operario de Almacén y Control de Inventarios',
+    area: 'Logística y Bodega',
+    sede: 'Centro de Distribución - Patio Operativo',
+    nivelRiesgo: 5,
+    email: 'aramos@empresa.co',
+    telefono: '318 334 1116',
+    fechaIngreso: '2023-02-18',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-17',
+    nombre: 'LUIS FERNANDO MONTES CHAMORRO',
+    cedula: '1.017.554.120',
+    cargo: 'Operario de Ensamble y Empaque',
+    area: 'Operaciones y Planta',
+    sede: 'Planta de Operaciones',
+    nivelRiesgo: 5,
+    email: 'lmontes@empresa.co',
+    telefono: '310 998 4417',
+    fechaIngreso: '2022-08-01',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-18',
+    nombre: 'EDDIE ACOSTA BARROS',
+    cedula: '72.334.890',
+    cargo: 'Supervisor de Planta y Seguridad Operativa',
+    area: 'Operaciones',
+    sede: 'Planta de Operaciones',
+    nivelRiesgo: 5,
+    email: 'eacosta@empresa.co',
+    telefono: '314 556 2218',
+    fechaIngreso: '2019-11-05',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'COPASST',
+  },
+  {
+    id: 'emp-19',
+    nombre: 'RONALD MOLINA LOZANO',
+    cedula: '1.023.771.200',
+    cargo: 'Técnico Electricista Industrial',
+    area: 'Mantenimiento Industrial',
+    sede: 'Planta de Operaciones - Taller',
+    nivelRiesgo: 5,
+    email: 'rmolina@empresa.co',
+    telefono: '312 443 8819',
+    fechaIngreso: '2021-09-15',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-20',
+    nombre: 'YANELIS VANESSA MARTINEZ CERDA',
+    cedula: '1.015.667.890',
+    cargo: 'Recepcionista y Auxiliar de Compras',
+    area: 'Administración',
+    sede: 'Sede Principal - Cazucá (Oficinas)',
+    nivelRiesgo: 1,
+    email: 'ymartinez@empresa.co',
+    telefono: '315 778 2220',
+    fechaIngreso: '2023-11-01',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-21',
+    nombre: 'GUSTAVO ANTONIO MUÑOZ BECERRA',
+    cedula: '79.445.890',
+    cargo: 'Operador de Montacargas y Patio',
+    area: 'Logística y Bodega',
+    sede: 'Centro de Distribución - Patio Operativo',
+    nivelRiesgo: 5,
+    email: 'gmunoz@empresa.co',
+    telefono: '300 445 9921',
+    fechaIngreso: '2020-07-12',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-22',
+    nombre: 'ELKIN DIAZ',
+    cedula: '1.018.334.567',
+    cargo: 'Operario de Cargue y Descargue',
+    area: 'Operaciones',
+    sede: 'Centro de Distribución - Patio Operativo',
+    nivelRiesgo: 5,
+    email: 'ediaz@empresa.co',
+    telefono: '316 223 8822',
+    fechaIngreso: '2022-05-20',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-23',
+    nombre: 'ROBERT ANDRES GULLOSO GULLOSO',
+    cedula: '1.024.556.789',
+    cargo: 'Operario de Producción y Acabados',
+    area: 'Operaciones y Planta',
+    sede: 'Planta de Operaciones',
+    nivelRiesgo: 5,
+    email: 'rgulloso@empresa.co',
+    telefono: '317 990 4423',
+    fechaIngreso: '2023-03-10',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-24',
+    nombre: 'MIKE DAVID ARROYO HERRERA',
+    cedula: '1.026.889.001',
+    cargo: 'Control y Seguridad de Instalaciones',
+    area: 'Seguridad y Salud (SST)',
+    sede: 'Sede Principal - Cazucá',
+    nivelRiesgo: 1,
+    email: 'marroyo@empresa.co',
+    telefono: '313 778 1124',
+    fechaIngreso: '2022-12-01',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-25',
+    nombre: 'LUZ DARI CRESPO GOMEZ',
+    cedula: '52.778.441',
+    cargo: 'Servicios Generales y Saneamiento',
+    area: 'Servicios Generales',
+    sede: 'Sede Principal - Cazucá (Oficinas)',
+    nivelRiesgo: 1,
+    email: 'lcrespo@empresa.co',
+    telefono: '311 223 7725',
+    fechaIngreso: '2021-06-15',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
+  },
+  {
+    id: 'emp-26',
+    nombre: 'DYLAN SANTIAGO RICO GONZALEZ',
+    cedula: '1.032.445.678',
+    cargo: 'Auxiliar de Despachos y Logística',
+    area: 'Logística y Transporte',
+    sede: 'Centro de Distribución - Patio Operativo',
+    nivelRiesgo: 5,
+    email: 'drico@empresa.co',
+    telefono: '319 887 3326',
+    fechaIngreso: '2024-03-01',
+    estado: 'activo',
+    tieneAccesoSistema: false,
+    comiteAsignado: 'NINGUNO',
   },
 ];
 
@@ -87,12 +480,12 @@ const INITIAL_COMPANY: CompanyProfile = {
   arl: 'Seguros Bolívar / ARL SURA',
   nivelRiesgo: 5,
   nivelesRiesgo: [1, 5],
-  totalTrabajadores: 48,
-  sedePrincipal: 'Sede Principal - Zona Industrial Cazucá',
+  totalTrabajadores: 26,
+  sedePrincipal: 'Sede Principal - Cazucá',
   direccion: 'Calle 17 # 68D - 45',
   ciudad: 'Bogotá D.C., Colombia',
-  representanteLegal: 'Carlos Andrés Mendoza Vargas',
-  responsableSST: 'Ing. Laura Marcela Gómez Pardo',
+  representanteLegal: 'Diego Zuñiga',
+  responsableSST: 'Diego Zuñiga & Wendy Angulo',
   licenciaSST: 'Resolución SDS-34821 de 2021',
   vigenciaComitesDesde: '2026-01-15',
   vigenciaComitesHasta: '2028-01-14',
@@ -102,107 +495,107 @@ const INITIAL_MEMBERS: Member[] = [
   // COPASST
   {
     id: 'm1',
-    nombre: 'Ing. Laura Marcela Gómez Pardo',
+    nombre: 'JAIDER OSORIO CHICO',
     cedula: '1.018.452.331',
-    cargo: 'Coordinadora de Seguridad y Salud en el Trabajo',
+    cargo: 'Líder de Operaciones y Planta',
     comite: 'COPASST',
-    representacion: 'Empleador',
+    representacion: 'Trabajadores',
     rol: 'Presidente',
     condicion: 'Principal',
-    telefono: '3104589211',
-    email: 'sst@logisticaandina.co',
+    telefono: '3104589901',
+    email: 'jaider@empresa.co',
     fechaPosesion: '2026-01-15',
   },
   {
     id: 'm2',
-    nombre: 'Ricardo Antonio Beltrán Peña',
-    cedula: '79.845.120',
-    cargo: 'Jefe de Mantenimiento de Flota',
+    nombre: 'CAROLINA MARIMON SIMARRA',
+    cedula: '53.112.879',
+    cargo: 'Coordinadora de Facturación y Compras',
     comite: 'COPASST',
     representacion: 'Empleador',
-    rol: 'Vocal / Miembro',
-    condicion: 'Suplente',
-    telefono: '3158941203',
-    email: 'mantenimiento@logisticaandina.co',
+    rol: 'Secretario',
+    condicion: 'Principal',
+    telefono: '3042239906',
+    email: 'carolina@empresa.co',
     fechaPosesion: '2026-01-15',
   },
   {
     id: 'm3',
-    nombre: 'Diana Milena Rincón Castro',
-    cedula: '52.981.440',
-    cargo: 'Supervisora de Operaciones Bodega',
-    comite: 'COPASST',
-    representacion: 'Trabajadores',
-    rol: 'Secretario',
-    condicion: 'Principal',
-    telefono: '3207712399',
-    email: 'operaciones@logisticaandina.co',
-    fechaPosesion: '2026-01-15',
-  },
-  {
-    id: 'm4',
-    nombre: 'Javier Orlando Pinzón Silva',
-    cedula: '80.231.995',
-    cargo: 'Operador de Montacargas',
+    nombre: 'SAMUEL PEÑA',
+    cedula: '1.030.551.487',
+    cargo: 'Operador de Bodega y Montacargas',
     comite: 'COPASST',
     representacion: 'Trabajadores',
     rol: 'Vocal / Miembro',
     condicion: 'Suplente',
-    telefono: '3186634120',
-    email: 'jpinzon@logisticaandina.co',
+    telefono: '3178892208',
+    email: 'samuel@empresa.co',
+    fechaPosesion: '2026-01-15',
+  },
+  {
+    id: 'm4',
+    nombre: 'EDDIE ACOSTA BARROS',
+    cedula: '72.334.890',
+    cargo: 'Supervisor de Planta y Seguridad Operativa',
+    comite: 'COPASST',
+    representacion: 'Empleador',
+    rol: 'Vocal / Miembro',
+    condicion: 'Suplente',
+    telefono: '3145562218',
+    email: 'eacosta@empresa.co',
     fechaPosesion: '2026-01-15',
   },
   // COCOLAB
   {
     id: 'm5',
-    nombre: 'Felipe Andrés Salamanca Ruiz',
+    nombre: 'TOMAS MERLANO FLOREZ',
     cedula: '1.022.341.552',
-    cargo: 'Director de Gestión Humana',
+    cargo: 'Coordinador de Logística y Abastecimiento',
     comite: 'COCOLAB',
     representacion: 'Empleador',
     rol: 'Presidente',
     condicion: 'Principal',
-    telefono: '3114529088',
-    email: 'gh@logisticaandina.co',
+    telefono: '3128894402',
+    email: 'tomas@empresa.co',
     fechaPosesion: '2026-01-15',
   },
   {
     id: 'm6',
-    nombre: 'Claudia Patricia Hoyos Meza',
-    cedula: '53.112.879',
-    cargo: 'Coordinadora de Nómina y Bienestar',
-    comite: 'COCOLAB',
-    representacion: 'Empleador',
-    rol: 'Vocal / Miembro',
-    condicion: 'Suplente',
-    telefono: '3128905541',
-    email: 'bienestar@logisticaandina.co',
-    fechaPosesion: '2026-01-15',
-  },
-  {
-    id: 'm7',
-    nombre: 'Esteban Morales Cárdenas',
-    cedula: '1.030.551.487',
-    cargo: 'Líder de Facturación y Despachos',
+    nombre: 'CESAR ANTONIO RIVERO LEIVA',
+    cedula: '80.231.995',
+    cargo: 'Técnico de Mantenimiento y Soldadura',
     comite: 'COCOLAB',
     representacion: 'Trabajadores',
     rol: 'Secretario',
     condicion: 'Principal',
-    telefono: '3197743201',
-    email: 'despachos@logisticaandina.co',
+    telefono: '3015548805',
+    email: 'cesar@empresa.co',
+    fechaPosesion: '2026-01-15',
+  },
+  {
+    id: 'm7',
+    nombre: 'WENDY ANGULO',
+    cedula: '1.028.456.789',
+    cargo: 'Encargada de Recursos Humanos',
+    comite: 'COCOLAB',
+    representacion: 'Empleador',
+    rol: 'Vocal / Miembro',
+    condicion: 'Suplente',
+    telefono: '3104589921',
+    email: 'wendy@empresa.co',
     fechaPosesion: '2026-01-15',
   },
   {
     id: 'm8',
-    nombre: 'Nathalia Sofía Vargas Peña',
-    cedula: '1.014.223.901',
-    cargo: 'Auxiliar Contable',
+    nombre: 'CLAUDIA BETANCOURT ALVAREZ',
+    cedula: '52.441.980',
+    cargo: 'Contadora General',
     comite: 'COCOLAB',
     representacion: 'Trabajadores',
     rol: 'Vocal / Miembro',
     condicion: 'Suplente',
-    telefono: '3168894125',
-    email: 'contabilidad@logisticaandina.co',
+    telefono: '3114456615',
+    email: 'cbetancourt@empresa.co',
     fechaPosesion: '2026-01-15',
   },
 ];
@@ -593,11 +986,19 @@ export const storage = {
   getCompany: (): CompanyProfile => {
     if (typeof window === 'undefined') return INITIAL_COMPANY;
     const val = localStorage.getItem(KEYS.COMPANY);
-    if (!val) return INITIAL_COMPANY;
+    if (!val) {
+      localStorage.setItem(KEYS.COMPANY, JSON.stringify(INITIAL_COMPANY));
+      return INITIAL_COMPANY;
+    }
     try {
       const parsed = JSON.parse(val);
       if (!parsed.nivelesRiesgo || !Array.isArray(parsed.nivelesRiesgo) || parsed.nivelesRiesgo.length === 0) {
-        parsed.nivelesRiesgo = parsed.nivelRiesgo ? [parsed.nivelRiesgo] : [1, 5];
+        parsed.nivelesRiesgo = [1, 5];
+      }
+      if (parsed.totalTrabajadores !== 26 && !parsed.representanteLegal?.includes('Diego')) {
+        parsed.totalTrabajadores = 26;
+        parsed.representanteLegal = 'Diego Zuñiga';
+        localStorage.setItem(KEYS.COMPANY, JSON.stringify(parsed));
       }
       return parsed;
     } catch {
@@ -614,7 +1015,20 @@ export const storage = {
   getMembers: (): Member[] => {
     if (typeof window === 'undefined') return INITIAL_MEMBERS;
     const val = localStorage.getItem(KEYS.MEMBERS);
-    return val ? JSON.parse(val) : INITIAL_MEMBERS;
+    if (!val) {
+      localStorage.setItem(KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
+      return INITIAL_MEMBERS;
+    }
+    try {
+      const parsed = JSON.parse(val);
+      if (!parsed.some((m: Member) => m.nombre.toUpperCase().includes('JAIDER'))) {
+        localStorage.setItem(KEYS.MEMBERS, JSON.stringify(INITIAL_MEMBERS));
+        return INITIAL_MEMBERS;
+      }
+      return parsed;
+    } catch {
+      return INITIAL_MEMBERS;
+    }
   },
   saveMembers: (data: Member[]) => {
     if (typeof window !== 'undefined') {
@@ -710,7 +1124,20 @@ export const storage = {
   getUsers: (): UserAccount[] => {
     if (typeof window === 'undefined') return DEMO_USERS;
     const val = localStorage.getItem('cocopasst_users');
-    return val ? JSON.parse(val) : DEMO_USERS;
+    if (!val) {
+      localStorage.setItem('cocopasst_users', JSON.stringify(DEMO_USERS));
+      return DEMO_USERS;
+    }
+    try {
+      const parsed = JSON.parse(val);
+      if (!parsed.some((u: UserAccount) => u.email === 'diego@empresa.co')) {
+        localStorage.setItem('cocopasst_users', JSON.stringify(DEMO_USERS));
+        return DEMO_USERS;
+      }
+      return parsed;
+    } catch {
+      return DEMO_USERS;
+    }
   },
   saveUsers: (data: UserAccount[]) => {
     if (typeof window !== 'undefined') {
@@ -734,6 +1161,49 @@ export const storage = {
     const list = storage.getUsers();
     const updated = list.filter(u => u.id !== id);
     storage.saveUsers(updated);
+    return updated;
+  },
+
+  getEmpleados: (): Empleado[] => {
+    if (typeof window === 'undefined') return INITIAL_EMPLEADOS;
+    const val = localStorage.getItem('cocopasst_empleados');
+    if (!val) {
+      localStorage.setItem('cocopasst_empleados', JSON.stringify(INITIAL_EMPLEADOS));
+      return INITIAL_EMPLEADOS;
+    }
+    try {
+      const parsed = JSON.parse(val);
+      if (parsed.length !== INITIAL_EMPLEADOS.length || !parsed.some((e: Empleado) => e.nombre.toUpperCase().includes('JAIDER'))) {
+        localStorage.setItem('cocopasst_empleados', JSON.stringify(INITIAL_EMPLEADOS));
+        return INITIAL_EMPLEADOS;
+      }
+      return parsed;
+    } catch {
+      return INITIAL_EMPLEADOS;
+    }
+  },
+  saveEmpleados: (data: Empleado[]) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cocopasst_empleados', JSON.stringify(data));
+      window.dispatchEvent(new Event('cocopasst_empleados_changed'));
+    }
+  },
+  addEmpleado: (emp: Empleado) => {
+    const list = storage.getEmpleados();
+    const updated = [emp, ...list];
+    storage.saveEmpleados(updated);
+    return updated;
+  },
+  updateEmpleado: (id: string, updates: Partial<Empleado>) => {
+    const list = storage.getEmpleados();
+    const updated = list.map(e => e.id === id ? { ...e, ...updates } : e);
+    storage.saveEmpleados(updated);
+    return updated;
+  },
+  deleteEmpleado: (id: string) => {
+    const list = storage.getEmpleados();
+    const updated = list.filter(e => e.id !== id);
+    storage.saveEmpleados(updated);
     return updated;
   },
 
