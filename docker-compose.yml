@@ -1,12 +1,13 @@
 services:
-  copasst-cocolab:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: copasst-cocolab-app
+    container_name: copasst-cocolab
     restart: always
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - HOSTNAME=0.0.0.0
